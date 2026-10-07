@@ -103,7 +103,8 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] `--dry-run` confere sem gravar: 90 itens de catálogo, 9 reservas do cenário + 192 do CSV (189 com ambiente, 12 em local próprio), 815 itens de reserva.
   - [x] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada. 907 itens (92 de catálogo/contadores + 815 de reservas: 201 META, 208 PER, 196 OCUP#AMBI, 210 OCUP#RECU); reexecução: 0 gravados.
 - [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
-  - [ ] O redeploy sem mudança no template não cria recursos novos (só atualiza código).
+  - [x] O redeploy sem mudança no template não cria recursos novos (só atualiza código). Feito com a 2.10 ainda em stub: um novo redeploy entra quando ela ficar pronta.
+  - [ ] ID tokens das contas de demo por `uv run scripts/obter_tokens.py` (login SRP, tokens em `~/.cache/sisgares/tokens.json`).
   - [ ] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
   - [ ] Primeira escrita (`POST /reservas`) funciona; testar sem o statement inline `kms:GenerateDataKey` e removê-lo se a escrita continuar ok (`design.md` §12.5). _R13.4_
   - [ ] Log group de cada função recebe as decisões `allow`/`deny` em JSON, sem e-mail. _R9.2_
