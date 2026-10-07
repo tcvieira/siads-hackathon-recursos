@@ -73,18 +73,20 @@ instala as dependências do `requirements.txt` que estiver no `CodeUri`.
 | Ambiente | `CAT#AMBI` | `<id>` | | desc, ativo, paiId, setores[] |
 | Disposição | `CAT#DISP` | `<id>` | | desc, ativo, icone |
 | Recurso | `CAT#RECU` | `<id>` | | desc, grupoId, limitado, disponibilidade, ativo, icone, ambientesVinculados[], setores[] |
+| Grupo de recurso | `CAT#GREC` | `<id>` | | desc, ordem, ativo |
 | Setor | `CAT#ENVO` | `<id>` | | desc, email, ativo |
-| Vínculo setor | `CAT#VINC` | `AMBI#<id>#ENVO#<id>` ou `RECU#<id>#ENVO#<id>` | | codigoServicoSnp? |
+| Vínculo setor | `CAT#VINC` | `AMBI#<id>#ENVO#<id>` ou `RECU#<id>#ENVO#<id>` | | tipo, alvoId, setorId, codigoServicoSnp? |
 | Config | `CAT#CONF` | `GLOBAL` | | faixaInicio, faixaFim, antecedenciaMin, margemMin |
-| Reserva | `RESE#<id>` | `META` | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[], recursos[{recursoId,qtd}], solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
-| Agenda do período | `RESE#<id>` | `PER#<n>` | `AGENDA` / `<inicio>#<id>` | inicio, termino, cancelada, ambienteId, setoresIds[] |
-| Ocupação de ambiente | `OCUP#AMBI#<a>` | `<inicio>#<id>#<n>` | | termino, reservaId |
-| Ocupação de recurso limitado | `OCUP#RECU#<r>` | `<inicio>#<id>#<n>` | | termino, reservaId, qtd |
+| Reserva | `RESE#<id>` | `META` | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[{inicio,termino}], recursos[{recursoId,qtd}], id, solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
+| Agenda do período | `RESE#<id>` | `PER#<n>` | `AGENDA` / `<inicio>#<id>` | reservaId, inicio, termino, cancelada, ambienteId?, setoresIds[] |
+| Ocupação de ambiente | `OCUP#AMBI#<a>` | `<inicio>#<id>#<n>` | | reservaId, inicio, termino |
+| Ocupação de recurso limitado | `OCUP#RECU#<r>` | `<inicio>#<id>#<n>` | | reservaId, inicio, termino, qtd |
 | Lock | `LOCK#AMBI#<raiz>` / `LOCK#RECU#<r>` | `LOCK` | | versao |
+| Contador | `CTR#RESE` / `CTR#SNP` | `CTR` | | valor (último número emitido) |
 | E-mail simulado | `RESE#<id>` | `EMAIL#<ts>#<setor>` | `NOTIF` / `<ts>` | setorId, para, assunto, tipo(criada/alterada/cancelada), alteracoes[{campo,antes,depois}], html |
 | Pedido SNP | `RESE#<id>` | `SNP#<setor>` | | numero, codigoServico, situacao |
 
-IDs novos: `RESE#` usa contador atômico (`CTR#RESE`), começando acima do maior ID do seed (17325). O número SNP usa o `CTR#SNP`.
+IDs novos: `RESE#` usa contador atômico (`CTR#RESE`): `UpdateItem` com `ADD valor :1` e `ReturnValues=UPDATED_NEW`, e o valor devolvido é o novo ID. O seed grava em `valor` o último ID que usou (CSV + cenário de demo). O número SNP usa o `CTR#SNP` (começa em 0). IDs, `<n>` dos períodos (a partir de 0) e IDs de catálogo são strings.
 
 **Datas:** todo instante é gravado como `YYYY-MM-DDTHH:MM:SS-03:00`. O Pydantic converte para esse
 offset qualquer data recebida (inclusive com `Z`), porque as chaves `<inicio>#…` são comparadas como

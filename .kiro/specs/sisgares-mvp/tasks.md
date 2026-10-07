@@ -94,13 +94,14 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOMAIN`, `VITE_API_URL` e `VITE_REDIRECT_URI=http://localhost:5173/` no `.env` da raiz (lido pelo Vite em dev).
   - [x] As mesmas na branch `main` do Amplify (`aws amplify update-branch --environment-variables`), com `VITE_REDIRECT_URI=https://main.d3vro5b84ccm5j.amplifyapp.com/`.
 - [ ] 1.7 `scripts/seed.py` e execução (0:50–1:15). Tem alocação própria (sobreposição com margem e hierarquia de ambientes), para não esperar a Frente 2; grava as chaves do `design.md` §3 (inclusive `OCUP#…` e `AGENDA`). Lê `TABLE_NAME` e `COGNITO_USER_POOL_ID` do `.env`. Precisa rodar **antes** do redeploy (1.8), enquanto a `notificacoes` ainda é o stub. Precisa das contas de demo (1.2). _R11; 1.2, 1.5_
-  - [ ] Catálogo, vínculos com `setores[]`/`ambientesVinculados[]` pré-computados, `codigoServicoSnp` (R11.4), config e contadores (`CTR#RESE` = 17326).
-  - [ ] Números com ponto → inteiros; datas → ISO −03:00 (R11.1).
-  - [ ] Recursos de `dados-solicitacao.csv` (R11.2).
-  - [ ] Cenário de demo primeiro (`--data-demo`, padrão hoje): F-RN5, F-RN6, F-RN8, ≥ 6 reservas nos próximos 7 dias para o SMSG, ≥ 3 do `solicitante@example.com` com o `sub` lido por `admin-get-user` (R11.6).
-  - [ ] Históricas com ambiente compatível com a RN9 e sem conflito com a RN5/RN6, sem aplicar RN3/RN4; RN8 conferida contra o cenário; fallback "local próprio" com complemento (R11.3).
-  - [ ] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
-  - [ ] Conferir a contagem de itens por tipo (`CAT#…`, `RESE#…`, `OCUP#…`).
+  - [x] Catálogo, vínculos com `setores[]`/`ambientesVinculados[]` pré-computados, `codigoServicoSnp` (R11.4), config e contadores (`CTR#RESE` = 17326).
+  - [x] Números com ponto → inteiros; datas → ISO −03:00 (R11.1).
+  - [x] Recursos de `dados-solicitacao.csv` (R11.2).
+  - [x] Cenário de demo primeiro (`--data-demo`, padrão hoje): F-RN5, F-RN6, F-RN8, ≥ 6 reservas nos próximos 7 dias para o SMSG, ≥ 3 do `solicitante@example.com` com o `sub` lido por `admin-get-user` (R11.6).
+  - [x] Históricas com ambiente compatível com a RN9 e sem conflito com a RN5/RN6, sem aplicar RN3/RN4; RN8 conferida contra o cenário; fallback "local próprio" com complemento (R11.3).
+  - [x] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
+  - [x] `--dry-run` confere sem gravar: 90 itens de catálogo, 9 reservas do cenário + 192 do CSV (189 com ambiente, 12 em local próprio), 815 itens de reserva.
+  - [ ] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada.
 - [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
   - [ ] O redeploy sem mudança no template não cria recursos novos (só atualiza código).
   - [ ] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
