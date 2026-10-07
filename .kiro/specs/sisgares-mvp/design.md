@@ -175,7 +175,7 @@ No Amplify, as mesmas variáveis ficam na branch (§12.2).
 ## 8. Segurança
 
 - CMK do KMS na tabela, HTTPS em todo lugar (Amplify, API GW, Cognito).
-- Roles mínimas: catalogo → `DynamoDBReadPolicy`; paineis → `DynamoDBReadPolicy`; reservas → `DynamoDBCrudPolicy`; notificacoes → leitura do stream + `DynamoDBCrudPolicy`. Todas com `kms:Decrypt` (e `GenerateDataKey` nas que escrevem, a confirmar: ver §12.5) na CMK.
+- Roles mínimas: catalogo → `DynamoDBReadPolicy`; paineis → `DynamoDBReadPolicy`; reservas → `DynamoDBCrudPolicy`; notificacoes → leitura do stream + `DynamoDBCrudPolicy`. Todas só com `kms:Decrypt` na CMK (`GenerateDataKey` não é necessário, confirmado no redeploy, §12.5).
 - CORS restrito à URL do Amplify e a `http://localhost:5173`. Throttling no stage (ex.: 50 rps, burst 100).
 - Nenhum e-mail ou dado pessoal nos logs (só `sub`). Os dados pessoais do seed são fictícios (contas `example.com`, solicitantes inventados). Os e-mails dos setores são os endereços institucionais do CSV do kit e nunca recebem mensagem (envio simulado).
 - Como cada item acima é provisionado (recursos, policies, parâmetros) está em §12.
@@ -324,8 +324,8 @@ A ordem entre as Etapas 0–6 é responsabilidade de quem executa e está nas ta
 |---|---|---|
 | catalogo | `DynamoDBReadPolicy` | `KMSDecryptPolicy` |
 | paineis | `DynamoDBReadPolicy` | `KMSDecryptPolicy` |
-| reservas | `DynamoDBCrudPolicy` (cobre as ações do `TransactWriteItems`) | `KMSDecryptPolicy` + statement inline `kms:GenerateDataKey` |
-| notificacoes | `DynamoDBCrudPolicy` + leitura do stream (o SAM acrescenta ao declarar o evento `DynamoDB`) | `KMSDecryptPolicy` + statement inline `kms:GenerateDataKey` |
+| reservas | `DynamoDBCrudPolicy` (cobre as ações do `TransactWriteItems`) | `KMSDecryptPolicy` |
+| notificacoes | `DynamoDBCrudPolicy` + leitura do stream (o SAM acrescenta ao declarar o evento `DynamoDB`) | `KMSDecryptPolicy` |
 
   Todas recebem só escrita de logs (`AWSLambdaBasicExecutionRole`, incluída pelo SAM).
 - Event source do stream (função `notificacoes`), sem DLQ; com `MaximumRetryAttempts: 2`, um
@@ -414,11 +414,13 @@ Decididas (aplicar no `template.yaml`):
 - As reservas do seed não geram e-mails nem pedidos SNP: o seed roda depois do primeiro deploy (1.5), quando a
   `notificacoes` implantada ainda é o stub, que descarta os eventos do stream (`LATEST`). A tela
   Notificações ganha dados na demo (passo 4 da §11).
+- Sem `kms:GenerateDataKey` nas roles: com a tabela criptografada pela CMK, criar, alterar e cancelar
+  reservas funcionou só com `kms:Decrypt` (teste da tarefa 1.8). O DynamoDB usa a própria chave de
+  tabela, sem pedir data keys em nome da Lambda, então o statement foi removido (privilégio mínimo).
 
 Pendentes:
 
 | Pendência | Opção sugerida até decidir |
 |---|---|
-| `kms:GenerateDataKey` nas roles que escrevem (`reservas`, `notificacoes`) é de fato necessário? Para acesso via DynamoDB a documentação costuma citar só `kms:Decrypt` e `kms:DescribeKey`. | Manter o statement inline até a primeira escrita do redeploy (1.8); se a escrita funcionar sem ele, remover (privilégio mínimo). |
 | Plano B do frontend (S3 + CloudFront) não está detalhado no `ARQUITETURA.md` | Se acionado, decidir na hora se entra no SAM ou é feito por CLI, e atualizar callbacks e CORS. |
 | Sufixo único do domínio de login do Cognito (`DOMINIO`) | Pedido pelo `cognito.sh` na primeira execução (`read -p`) e gravado em `COGNITO_DOMAIN` no `.env`; as execuções seguintes reaproveitam esse valor. |
