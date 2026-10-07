@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SISGARES MVP: CMK do KMS, tabela única com stream, HTTP API com JWT do Cognito e 4 Lambdas
+  Python 3.12, cada uma com a sua role (design.md §12). O Cognito vem do scripts/cognito.sh e
+  entra só pelos parâmetros UserPoolId e ClientId.
+
+Parameters:
+  UserPoolId:
+    Type: String
+    Description: ID do User Pool (COGNITO_USER_POOL_ID no .env)
+  ClientId:
+    Type: String
+    Description: App client público (COGNITO_CLIENT_ID no .env); é a audience do ID token
+  AmplifyOrigin:
+    Type: String
+    Default: https://main.d3vro5b84ccm5j.amplifyapp.com
+    Description: Origem do frontend no Amplify, sem barra final (CORS)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    CodeUri: src/
+    Timeout: 10
+    MemorySize: 512
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Tabela
+        POWERTOOLS_SERVICE_NAME: sisgares
+        LOG_LEVEL: INFO
+
+Resources:
+  # --- KMS ----------------------------------------------------------------------------------
+  Chave:
+    Type: AWS::KMS::Key
+    # Retain: a exclusão da CMK é agendada à mão depois do hackathon (design.md §12.4).
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: CMK do SISGARES (tabela e stream)
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          # A conta administra a chave, para que as policies IAM das roles tenham efeito.
+          - Sid: AdministracaoPelaConta
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+
+  AliasChave:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/sisgares
+      TargetKeyId: !Ref Chave
+
+  # --- DynamoDB (modelo em design.md §3) ----------------------------------------------------
+  Tabela:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: sisgares
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: PK, AttributeType: S }
+        - { AttributeName: SK, AttributeType: S }
+        - { AttributeName: GSI1PK, AttributeType: S }
+        - { AttributeName: GSI1SK, AttributeType: S }
+      KeySchema:
+        - { AttributeName: PK, KeyType: HASH }
+        - { AttributeName: SK, KeyType: RANGE }
+      # Só o GSI1 (SOLI#, AGENDA, NOTIF). As ocupações ficam em partições OCUP# da própria
+      # tabela, lidas com ConsistentRead (RN7).
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - { AttributeName: GSI1PK, KeyType: HASH }
+            - { AttributeName: GSI1SK, KeyType: RANGE }
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !GetAtt Chave.Arn
+
+  # --- HTTP API -----------------------------------------------------------------------------
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        DefaultAuthorizer: CognitoJwt
+        Authorizers:
+          CognitoJwt:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPoolId}
+              # O frontend manda o ID token, que traz o client ID em `aud`.
+              audience:
+                - !Ref ClientId
+      # O preflight OPTIONS é respondido pelo próprio HTTP API, sem passar pelo authorizer.
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref AmplifyOrigin
+          - http://localhost:5173
+        AllowHeaders:
+          - authorization
+          - content-type
+        AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
+        MaxAge: 600
+      DefaultRouteSettings:
+        ThrottlingRateLimit: 50
+        ThrottlingBurstLimit: 100
+
+  # --- Lambdas (uma role por função, design.md §12.2) ---------------------------------------
+  CatalogoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/catalogo.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref Tabela
+        - KMSDecryptPolicy:
+            KeyId: !Ref Chave
+      Events:
+        Catalogo:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /catalogo, Method: GET }
+
+  ReservasFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/reservas.handler
+      Policies:
+        # Cobre as ações do TransactWriteItems (Put/Update/Delete/ConditionCheckItem).
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Tabela
+        - KMSDecryptPolicy:
+            KeyId: !Ref Chave
+        # Pendência do design.md §12.5: testar a escrita sem este statement no redeploy (1.8).
+        - Statement:
+            - Effect: Allow
+              Action: kms:GenerateDataKey
+              Resource: !GetAtt Chave.Arn
+      Events:
+        Validar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /reservas/validar, Method: POST }
+        Criar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /reservas, Method: POST }
+        Listar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /reservas, Method: GET }
+        Detalhar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: '/reservas/{id}', Method: GET }
+        Alterar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: '/reservas/{id}', Method: PUT }
+        Cancelar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: '/reservas/{id}', Method: DELETE }
+
+  PaineisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/paineis.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref Tabela
+        - KMSDecryptPolicy:
+            KeyId: !Ref Chave
+      Events:
+        Ocupacao:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: '/ambientes/{id}/ocupacao', Method: GET }
+        Atendimento:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /painel/atendimento, Method: GET }
+        Notificacoes:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /notificacoes, Method: GET }
+
+  NotificacoesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/notificacoes.handler
+      Timeout: 30
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Tabela
+        - KMSDecryptPolicy:
+            KeyId: !Ref Chave
+        - Statement:
+            - Effect: Allow
+              Action: kms:GenerateDataKey
+              Resource: !GetAtt Chave.Arn
+      Events:
+        # A leitura do stream entra na role automaticamente ao declarar este evento.
+        Stream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt Tabela.StreamArn
+            StartingPosition: LATEST
+            BatchSize: 10
+            BisectBatchOnFunctionError: true
+            MaximumRetryAttempts: 2          # depois disso o registro é descartado (sem DLQ no MVP)
+            FilterCriteria:
+              Filters:
+                # Só o META das reservas: evita o loop com os EMAIL#/SNP# que a função grava.
+                - Pattern: '{"dynamodb": {"Keys": {"PK": {"S": [{"prefix": "RESE#"}]}, "SK": {"S": ["META"]}}}}'
+
+  # --- CloudWatch Logs (7 dias) -------------------------------------------------------------
+  CatalogoLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CatalogoFunction}
+      RetentionInDays: 7
+
+  ReservasLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ReservasFunction}
+      RetentionInDays: 7
+
+  PaineisLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PaineisFunction}
+      RetentionInDays: 7
+
+  NotificacoesLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${NotificacoesFunction}
+      RetentionInDays: 7
+
+Outputs:
+  ApiUrl:
+    Description: URL base do HTTP API (API_URL / VITE_API_URL)
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com
+  TableName:
+    Description: Nome da tabela (TABLE_NAME)
+    Value: !Ref Tabela

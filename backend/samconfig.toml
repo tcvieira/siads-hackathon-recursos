@@ -1,0 +1,17 @@
+# Sem segredo: os IDs do Cognito entram por --parameter-overrides (scripts/deploy_backend.sh).
+version = 0.1
+
+[default.global.parameters]
+stack_name = "sisgares"
+region = "us-east-1"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = false
+# Redeploy sem mudança no template não é erro (tarefa 1.8).
+fail_on_empty_changeset = false

@@ -27,9 +27,9 @@ Regras:
 | Marco | Quando (aprox.) | Quem entrega | O que destrava |
 |---|---|---|---|
 | M0 — base e contratos no `main` | 0:10 | Fase 0 | Início das três frentes |
-| M1 — Cognito pronto (`COGNITO_*` no `.env`) | 0:35 | Frente 1 (1.2) | Login real na Frente 3 (3.3); parâmetros do deploy (1.5) |
-| M2 — `hierarquia` e `conflitos` verdes | 0:45 | Frente 2 (2.1, 2.3) | Seed (1.7) |
-| M3 — stack no ar com stubs (`API_URL`, `TABLE_NAME`) | 0:50 | Frente 1 (1.5) | Variáveis `VITE_*` (1.6); seed (1.7) |
+| M1 — Cognito pronto (`COGNITO_*` no `.env`) | 0:35 | Frente 1 (1.2). Pool, client e grupos **feitos**; faltam as contas de demo | Login real na Frente 3 (3.3); parâmetros do deploy (1.5) |
+| M2 — `hierarquia` e `conflitos` verdes | 0:45 | Frente 2 (2.1, 2.3) | `repo.py` e handlers (2.7–2.9) |
+| M3 — stack no ar com stubs (`API_URL`, `TABLE_NAME`) | 0:50 | Frente 1 (1.5) | Variáveis `VITE_*` (1.6); seed (1.7). **Feito**: `API_URL`, `TABLE_NAME` e `VITE_*` no `.env` |
 | M4 — handlers reais prontos | 1:25 | Frente 2 (2.11) | Redeploy (1.8) |
 | M5 — API real no ar | 1:30 | Frente 1 (1.8) | Integração (Fase 4) |
 
@@ -62,38 +62,38 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
 
 ## Frente 1 — Infra, Cognito e dados
 
-- [ ] 1.1 Pré-requisitos de conta e ferramentas (0:10–0:15). _R13.6, design §12_
-  - [ ] `.env` preenchido a partir do `.env-example`, `source` feito e `python scripts/testar_aws.py` ok em `us-east-1`, sem `BLOQUEADO` em Cognito, CloudFormation, IAM, Lambda, API Gateway (HTTP), DynamoDB, KMS, CloudWatch Logs e Amplify Hosting.
-  - [ ] AWS CLI v2 e SAM CLI instalados (`aws --version`, `sam --version`).
-  - [ ] App Amplify confirmado sem recriar (`aws amplify list-apps` → `d3vro5b84ccm5j`, branch `main` com auto-build); `AMPLIFY_APP_ID` anotado no `.env`.
+- [x] 1.1 Pré-requisitos de conta e ferramentas (0:10–0:15). _R13.6, design §12_
+  - [x] `.env` preenchido a partir do `.env-example`, `source` feito e `python scripts/testar_aws.py` ok em `us-east-1`, sem `BLOQUEADO` em Cognito, CloudFormation, IAM, Lambda, API Gateway (HTTP), DynamoDB, KMS, CloudWatch Logs e Amplify Hosting.
+  - [x] AWS CLI v2 e SAM CLI instalados (`aws --version`, `sam --version`).
+  - [x] App Amplify confirmado sem recriar (`aws amplify list-apps` → `d3vro5b84ccm5j`, branch `main` com auto-build); `AMPLIFY_APP_ID` anotado no `.env`.
 - [ ] 1.2 `scripts/cognito.sh` (0:15–0:35): passos 1–7 do `ARQUITETURA.md` (o passo 0 já foi feito), idempotente, callbacks `http://localhost:5173/` e `https://main.$APP_ID.amplifyapp.com/`. Rodar. Ao terminar, avisar as frentes 2 e 3 (**M1**). _R1, R13.2, R13.8, design §12.2_
-  - [ ] O script começa com `APP_ID=${AMPLIFY_APP_ID:?}` e `export AWS_REGION=${AWS_DEFAULT_REGION:-us-east-1}`.
-  - [ ] `DOMINIO=${COGNITO_DOMAIN:-}`; se vazio, pede o sufixo (`read -p`) e grava `COGNITO_DOMAIN` no `.env`; a segunda execução reaproveita o mesmo prefixo.
-  - [ ] Cada `create-*` (pool, domínio, client, grupos, contas) é precedido de consulta e pula o que já existe; a segunda execução não cria nada.
-  - [ ] Senha de demo lida sem eco (`read -s`), fora do `.env` e do repositório.
-  - [ ] `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID` e `COGNITO_DOMAIN` (só o prefixo) gravados no `.env`.
+  - [x] O script começa com `APP_ID=${AMPLIFY_APP_ID:?}` e `export AWS_REGION=${AWS_DEFAULT_REGION:-us-east-1}`.
+  - [x] `DOMINIO=${COGNITO_DOMAIN:-}`; se vazio, usa o domínio que o pool já tiver ou propõe `sisgares-<id da conta>` (único na região; `read -p` permite trocar) e grava `COGNITO_DOMAIN` no `.env`; a segunda execução reaproveita o mesmo prefixo.
+  - [x] Cada `create-*` (pool, domínio, client, grupos, contas) é precedido de consulta e pula o que já existe; a segunda execução não cria nada.
+  - [x] Senha de demo lida sem eco (`read -s`, ou `SENHA_DEMO` exportada), só quando alguma conta precisa ser criada; fora do `.env` e do repositório.
+  - [x] `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID` e `COGNITO_DOMAIN` (só o prefixo) gravados no `.env`.
   - [ ] Conferência do passo 7: o atendente tem `custom:setorId`; as 3 contas estão no grupo certo.
   - [ ] Teste de login no Cognito redireciona para `http://localhost:5173/?code=...`.
-- [ ] 1.3 Regra de rewrite de SPA no app Amplify (independe do resto): `aws amplify update-app --app-id "$AMPLIFY_APP_ID" --custom-rules '[{"source":"</^[^.]+$/>","target":"/index.html","status":"200"}]'`. _R13.7, design §12.2_
-- [ ] 1.4 `backend/template.yaml` (pode começar em paralelo com a 1.2, porque só usa parâmetros). `sam validate --lint`. _design §1, §3, §8, §12.2; R13.1, R13.3, R13.4, R13.5, R13.8_
-  - [ ] Parâmetros `UserPoolId`, `ClientId` e `AmplifyOrigin` (sem barra final); nenhum valor de conta ou segredo fixo.
-  - [ ] `AWS::KMS::Key` + alias `alias/sisgares`, com rotação habilitada.
-  - [ ] Tabela `PAY_PER_REQUEST`, `SSEType: KMS` com a CMK, **só o GSI1** com projeção `ALL`, stream `NEW_AND_OLD_IMAGES` (`design.md` §3).
-  - [ ] `DeletionPolicy`/`UpdateReplacePolicy`: `Delete` na tabela, `Retain` na CMK.
-  - [ ] 4 funções Python 3.12 com `CodeUri: src/`, `Handler` próprio, `TABLE_NAME`/`POWERTOOLS_SERVICE_NAME`/`LOG_LEVEL` em `Globals` e uma role por função com as policies do `design.md` §12.2.
-  - [ ] HTTP API com `DefaultAuthorizer` JWT (`$request.header.Authorization`), CORS para `AmplifyOrigin` e `http://localhost:5173`, throttling 50 rps / burst 100; todas as rotas da §4 já declaradas como eventos `HttpApi` (apontando para os stubs da 0.1).
-  - [ ] Event source `DynamoDB` na `notificacoes` (`LATEST`, batch 10, bisect, `MaximumRetryAttempts: 2`, filtro `PK` prefixo `RESE#` e `SK = META`).
-  - [ ] Log group explícito por função (`LogGroupName: !Sub /aws/lambda/${<Função>}`), `RetentionInDays: 7`.
-  - [ ] Outputs `ApiUrl` e `TableName`; `backend/samconfig.toml` com stack `sisgares`, `us-east-1`, `CAPABILITY_IAM`, `resolve_s3`.
-- [ ] 1.5 Primeiro `sam build && sam deploy` em `backend/`, com os stubs (0:40–0:50). `UserPoolId`/`ClientId` passados por `--parameter-overrides` a partir do `.env`. Ao terminar, avisar as frentes (**M3**). _1.2, 1.4; R13.1, R13.5_
-  - [ ] Stack em `CREATE_COMPLETE`.
-  - [ ] Outputs anotados no `.env` (`API_URL`, `TABLE_NAME`).
-  - [ ] `aws dynamodb describe-table` mostra `SSEType: KMS`, o GSI1 e o stream.
-  - [ ] `curl` sem token em `$API_URL/catalogo` responde 401.
-- [ ] 1.6 Variáveis do frontend (logo após a M3). _R13.7, design §7, §12.3_
-  - [ ] `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOMAIN`, `VITE_API_URL` e `VITE_REDIRECT_URI=http://localhost:5173/` no `.env` da raiz (lido pelo Vite em dev).
-  - [ ] As mesmas na branch `main` do Amplify (`aws amplify update-branch --environment-variables`), com `VITE_REDIRECT_URI=https://main.d3vro5b84ccm5j.amplifyapp.com/`.
-- [ ] 1.7 `scripts/seed.py` e execução (0:50–1:15). Importa `dominio.hierarquia` e `dominio.conflitos` da Frente 2 (**M2**); grava as chaves do `design.md` §3 (inclusive `OCUP#…` e `AGENDA`). Lê `TABLE_NAME` e `COGNITO_USER_POOL_ID` do `.env`. Precisa rodar **antes** do redeploy (1.8), enquanto a `notificacoes` ainda é o stub. _R11; 1.5, M2_
+- [x] 1.3 Regra de rewrite de SPA no app Amplify (independe do resto): `aws amplify update-app --app-id "$AMPLIFY_APP_ID" --custom-rules '[{"source":"</^[^.]+$/>","target":"/index.html","status":"200"}]'`. _R13.7, design §12.2_
+- [x] 1.4 `backend/template.yaml` (pode começar em paralelo com a 1.2, porque só usa parâmetros). `sam validate --lint`. _design §1, §3, §8, §12.2; R13.1, R13.3, R13.4, R13.5, R13.8_
+  - [x] Parâmetros `UserPoolId`, `ClientId` e `AmplifyOrigin` (sem barra final); nenhum valor de conta ou segredo fixo.
+  - [x] `AWS::KMS::Key` + alias `alias/sisgares`, com rotação habilitada.
+  - [x] Tabela `PAY_PER_REQUEST`, `SSEType: KMS` com a CMK, **só o GSI1** com projeção `ALL`, stream `NEW_AND_OLD_IMAGES` (`design.md` §3).
+  - [x] `DeletionPolicy`/`UpdateReplacePolicy`: `Delete` na tabela, `Retain` na CMK.
+  - [x] 4 funções Python 3.12 com `CodeUri: src/`, `Handler` próprio, `TABLE_NAME`/`POWERTOOLS_SERVICE_NAME`/`LOG_LEVEL` em `Globals` e uma role por função com as policies do `design.md` §12.2.
+  - [x] HTTP API com `DefaultAuthorizer` JWT (`$request.header.Authorization`), CORS para `AmplifyOrigin` e `http://localhost:5173`, throttling 50 rps / burst 100; todas as rotas da §4 já declaradas como eventos `HttpApi` (apontando para os stubs da 0.1).
+  - [x] Event source `DynamoDB` na `notificacoes` (`LATEST`, batch 10, bisect, `MaximumRetryAttempts: 2`, filtro `PK` prefixo `RESE#` e `SK = META`).
+  - [x] Log group explícito por função (`LogGroupName: !Sub /aws/lambda/${<Função>}`), `RetentionInDays: 7`.
+  - [x] Outputs `ApiUrl` e `TableName`; `backend/samconfig.toml` com stack `sisgares`, `us-east-1`, `CAPABILITY_IAM`, `resolve_s3`.
+- [x] 1.5 Primeiro deploy com os stubs por `bash scripts/deploy_backend.sh` (`sam validate --lint`, `sam build`, `sam deploy` em `backend/` com `UserPoolId`/`ClientId` do `.env` em `--parameter-overrides`, e outputs gravados de volta no `.env`) (0:40–0:50). Ao terminar, avisar as frentes (**M3**). _1.2, 1.4; R13.1, R13.5_
+  - [x] Stack em `CREATE_COMPLETE`.
+  - [x] Outputs anotados no `.env` (`API_URL`, `TABLE_NAME`).
+  - [x] `aws dynamodb describe-table` mostra `SSEType: KMS`, o GSI1 e o stream.
+  - [x] `curl` sem token em `$API_URL/catalogo` responde 401.
+- [x] 1.6 Variáveis do frontend (logo após a M3). _R13.7, design §7, §12.3_
+  - [x] `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOMAIN`, `VITE_API_URL` e `VITE_REDIRECT_URI=http://localhost:5173/` no `.env` da raiz (lido pelo Vite em dev).
+  - [x] As mesmas na branch `main` do Amplify (`aws amplify update-branch --environment-variables`), com `VITE_REDIRECT_URI=https://main.d3vro5b84ccm5j.amplifyapp.com/`.
+- [ ] 1.7 `scripts/seed.py` e execução (0:50–1:15). Tem alocação própria (sobreposição com margem e hierarquia de ambientes), para não esperar a Frente 2; grava as chaves do `design.md` §3 (inclusive `OCUP#…` e `AGENDA`). Lê `TABLE_NAME` e `COGNITO_USER_POOL_ID` do `.env`. Precisa rodar **antes** do redeploy (1.8), enquanto a `notificacoes` ainda é o stub. Precisa das contas de demo (1.2). _R11; 1.2, 1.5_
   - [ ] Catálogo, vínculos com `setores[]`/`ambientesVinculados[]` pré-computados, `codigoServicoSnp` (R11.4), config e contadores (`CTR#RESE` = 17326).
   - [ ] Números com ponto → inteiros; datas → ISO −03:00 (R11.1).
   - [ ] Recursos de `dados-solicitacao.csv` (R11.2).
@@ -101,7 +101,7 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [ ] Históricas com ambiente compatível com a RN9 e sem conflito com a RN5/RN6, sem aplicar RN3/RN4; RN8 conferida contra o cenário; fallback "local próprio" com complemento (R11.3).
   - [ ] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
   - [ ] Conferir a contagem de itens por tipo (`CAT#…`, `RESE#…`, `OCUP#…`).
-- [ ] 1.8 Redeploy `sam build && sam deploy` com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
+- [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
   - [ ] O redeploy sem mudança no template não cria recursos novos (só atualiza código).
   - [ ] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
   - [ ] Primeira escrita (`POST /reservas`) funciona; testar sem o statement inline `kms:GenerateDataKey` e removê-lo se a escrita continuar ok (`design.md` §12.5). _R13.4_
