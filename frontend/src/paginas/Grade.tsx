@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
-import { Ban, CalendarPlus, Check, ChevronLeft, ChevronRight, ChevronsUpDown, History, Hourglass, Lock } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import { ArrowLeft, Ban, CalendarPlus, Check, ChevronLeft, ChevronRight, ChevronsUpDown, History, Hourglass, Lock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useCatalogo, useOcupacao } from '@/api/consultas'
 import type { Config, PeriodoOcupado } from '@/api/tipos'
@@ -66,8 +66,7 @@ function Celula({ estado, slot, dia, aoReservar }: { estado: Estado; slot: Slot;
   )
 }
 
-/** `painel`: na /grade2, mostra a ocupação da semana enquanto nenhum ambiente foi escolhido. */
-export default function Grade({ painel = false }: { painel?: boolean }) {
+export default function Grade() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [agora, setAgora] = useState(Date.now)
@@ -121,9 +120,9 @@ export default function Grade({ painel = false }: { painel?: boolean }) {
   // Ao escolher um ambiente pelo painel, leva o foco para o combobox (o Layout só foca o h1 ao mudar de rota).
   const ultimoEscolhido = useRef(escolhido)
   useEffect(() => {
-    if (painel && escolhido && escolhido !== ultimoEscolhido.current) document.getElementById(ids.combo)?.focus()
+    if (escolhido && escolhido !== ultimoEscolhido.current) document.getElementById(ids.combo)?.focus()
     ultimoEscolhido.current = escolhido
-  }, [painel, escolhido, ids.combo])
+  }, [escolhido, ids.combo])
 
   return (
     <section className="space-y-6">
@@ -197,9 +196,14 @@ export default function Grade({ painel = false }: { painel?: boolean }) {
       </p>
 
       {catalogo.isError && <p role="alert">Não foi possível carregar o catálogo: {catalogo.error.message}</p>}
-      {!ambienteId && catalogo.data && !painel && <p>Escolha um ambiente para ver os horários livres e ocupados.</p>}
-      {config && painel && (
+      {config && !escolhido && (
         <PainelOcupacao ambientes={ambientes} config={config} semana={semana} agora={agora} hrefAmbiente={hrefAmbiente} />
+      )}
+      {escolhido && (
+        <Link to={`?dia=${semana}`} className="inline-flex min-h-11 items-center gap-1.5 font-medium text-link underline-offset-2 hover:underline sm:min-h-8">
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Voltar para a ocupação da semana
+        </Link>
       )}
       {ambienteId && ocupacao.isPending && <output className="block">Carregando ocupação…</output>}
       {ocupacao.isError && <p role="alert">Não foi possível carregar a ocupação: {ocupacao.error.message}</p>}

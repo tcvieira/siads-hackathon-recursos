@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import { ErroApi } from '@/api/cliente'
 import { useSessao } from '@/auth/contexto'
 import { ProvedorSessao } from '@/auth/sessao'
@@ -23,7 +23,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Inicio /> },
       { path: 'grade', element: <Guarda papeis={SOLICITANTE}><Grade /></Guarda> },
-      { path: 'grade2', element: <Guarda papeis={SOLICITANTE}><Grade painel /></Guarda> },
+      { path: 'grade2', element: <Navigate to="/grade" replace /> },
       { path: 'reservas/nova', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
       { path: 'reservas/:id/editar', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
       { path: 'minhas-reservas', element: <Guarda papeis={SOLICITANTE}><MinhasReservas /></Guarda> },
