@@ -104,3 +104,15 @@ documento do caso foi descartado pela equipe.
 ### R12 — Testes
 1. As regras RN1–RN8, RN12 e RN13 DEVEM ter testes pytest no domínio, com cada exemplo da tabela da seção 6 do caso como caso de teste.
 2. O domínio DEVE ser Python puro, sem boto3, e receber `agora` injetado.
+
+### R13 — Infraestrutura e provisionamento
+**História:** como equipe, quero recriar o ambiente AWS por comandos versionados e documentados, na ordem do `design.md` §12.1, sem segredos no repositório.
+
+1. A CMK do KMS, a tabela `sisgares`, as 4 Lambdas com suas roles, o HTTP API com o JWT authorizer, o event source do stream e os log groups DEVEM ser declarados em `backend/template.yaml` (AWS SAM) e implantados com `sam build && sam deploy` no stack `sisgares`. QUANDO o deploy for repetido sem mudança no template, ENTÃO o sistema NÃO DEVE criar recursos duplicados.
+2. QUANDO `scripts/cognito.sh` rodar de novo, ENTÃO ele DEVE reaproveitar o User Pool, o domínio, o app client, os grupos e as contas existentes, sem criar duplicatas. O stack SAM DEVE receber o Cognito só pelos parâmetros `UserPoolId` e `ClientId`.
+3. A tabela e o stream DEVEM ser criptografados em repouso com a CMK do KMS do stack.
+4. Cada Lambda DEVE ter a sua própria role IAM, com só as ações da tabela e da CMK de que precisa (policy templates do SAM e, quando não houver template, statement inline restrito ao ARN da CMK).
+5. QUANDO o stack for implantado, ENTÃO ele DEVE expor os outputs `ApiUrl` e `TableName`.
+6. Credenciais AWS, token do GitHub e senha das contas de demo NÃO DEVEM ser versionados: valores só no `.env` (ignorado pelo git) ou lidos sem eco; o `.env-example` traz apenas os nomes das variáveis.
+7. QUANDO houver push na `main`, ENTÃO o Amplify DEVE gerar e publicar o frontend pelo `amplify.yml`, com as variáveis `VITE_*` configuradas na branch.
+8. O CORS do HTTP API DEVE aceitar só a URL do Amplify e `http://localhost:5173`, e as callbacks do Cognito DEVEM ser exatamente `http://localhost:5173/` e a URL do Amplify.
