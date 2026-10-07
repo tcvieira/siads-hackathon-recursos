@@ -4,6 +4,7 @@ import { Grade } from './grade/Grade'
 import { FormularioReserva } from './reserva/FormularioReserva'
 import { MinhasReservas } from './minhas-reservas/MinhasReservas'
 import { PainelAtendimento } from './atendimento/PainelAtendimento'
+import { Notificacoes } from './notificacoes/Notificacoes'
 import './App.css'
 
 /**
@@ -20,6 +21,7 @@ type Tela =
   | { nome: 'grade' }
   | { nome: 'minhas' }
   | { nome: 'atendimento' }
+  | { nome: 'notificacoes' }
   | { nome: 'formulario'; inicial: Partial<ReservaEntrada> }
 
 /** Converte Date local para o valor de <input type="datetime-local"> (YYYY-MM-DDTHH:MM). */
@@ -52,6 +54,7 @@ const MENU: ItemMenu[] = [
   { nome: 'grade', rotulo: 'Grade de horários' },
   { nome: 'minhas', rotulo: 'Minhas reservas' },
   { nome: 'atendimento', rotulo: 'Atendimento' },
+  { nome: 'notificacoes', rotulo: 'Notificações' },
   { nome: 'formulario', rotulo: 'Nova reserva' },
 ]
 
@@ -73,6 +76,7 @@ function App() {
     if (nome === 'formulario') setTela({ nome: 'formulario', inicial: {} })
     else if (nome === 'minhas') setTela({ nome: 'minhas' })
     else if (nome === 'atendimento') setTela({ nome: 'atendimento' })
+    else if (nome === 'notificacoes') setTela({ nome: 'notificacoes' })
     else setTela({ nome: 'grade' })
   }
 
@@ -117,6 +121,7 @@ function App() {
         {tela.nome === 'atendimento' && (
           <PainelAtendimento onAbrirReserva={() => setTela({ nome: 'formulario', inicial: {} })} />
         )}
+        {tela.nome === 'notificacoes' && <Notificacoes />}
         {tela.nome === 'formulario' && (
           <FormularioReserva inicial={tela.inicial} onSalvar={() => setTela({ nome: 'minhas' })} />
         )}
