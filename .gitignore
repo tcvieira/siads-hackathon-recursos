@@ -101,3 +101,8 @@ logs/
 *~
 .DS_Store
 Thumbs.db
+
+# --- Kiro ---
+# Configuracao local/pessoal do agente (permissions, mcp etc.). A proposta
+# versionada para a equipe fica em docs/kiro-config/. Steering e specs permanecem versionados.
+.kiro/settings/
