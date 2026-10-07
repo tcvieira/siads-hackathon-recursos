@@ -39,7 +39,7 @@ o critério de sucesso WCAG correspondente, para rastreabilidade.
 
 ## Como validar antes de concluir uma tela
 1. Navegar a tela inteira **apenas com teclado** (Tab, Shift+Tab, Enter, Espaço, Esc, setas); em mobile, apenas com leitor de tela (TalkBack/VoiceOver) e toque.
-2. Rodar verificador automatizado (axe DevTools / `@axe-core/core`, Lighthouse; em Angular, Playwright/Karma + `axe-core`) e zerar violações A/AA.
+2. Rodar verificador automatizado (axe DevTools / `@axe-core/react`, Lighthouse; lint com o plugin `jsx-a11y` do oxlint) e zerar violações A/AA.
 3. Conferir contraste de todas as cores novas (texto 4.5:1; grande 3:1; componentes/gráficos 3:1).
 4. Testar reflow em 320px de largura e zoom/texto a 200% sem perda de conteúdo ou rolagem horizontal.
 Nenhuma tela é "pronta" sem passar nesses quatro checks.
