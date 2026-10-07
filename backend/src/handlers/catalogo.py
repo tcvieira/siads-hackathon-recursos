@@ -1,15 +1,23 @@
-"""Lambda `catalogo`: GET /catalogo (design.md §4).
+"""Lambda `catalogo`: GET /catalogo (design.md §4; R2.8).
 
-Stub da Fase 0: só existe para o template SAM já apontar para o handler.
-A implementação real entra na tarefa 2.8.
+Devolve só itens ativos (ambientes, disposições, grupos e recursos com vínculos e `limitado`) e
+a configuração. `Catalogo` não tem e-mail de setor.
 """
 
-import json
+from aws_lambda_powertools.event_handler import APIGatewayHttpResolver
+
+from comum.http import registrar_erros, resposta, usuario_do_evento
+from comum.repo import obter_repo
+
+app = APIGatewayHttpResolver()
+registrar_erros(app)
+
+
+@app.get("/catalogo")
+def obter_catalogo():
+    usuario_do_evento(app)  # qualquer autenticado
+    return resposta(obter_repo().carregar_cadastros().catalogo_publico())
 
 
 def handler(event, context):
-    return {
-        "statusCode": 501,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({"mensagem": "Não implementado"}),
-    }
+    return app.resolve(event, context)

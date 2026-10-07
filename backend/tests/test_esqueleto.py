@@ -5,7 +5,7 @@ import json
 import pytest
 
 from dominio import modelos
-from handlers import catalogo, notificacoes, paineis, reservas
+from handlers import notificacoes, paineis
 
 CODIGOS_DESIGN = {
     "PERIODO_INVALIDO",
@@ -51,7 +51,7 @@ def test_dominio_sem_boto3():
     assert "pydantic" not in fonte.lower().replace("sem pydantic", "")
 
 
-@pytest.mark.parametrize("modulo", [catalogo, reservas, paineis])
+@pytest.mark.parametrize("modulo", [paineis])
 def test_handlers_http_stub_501(modulo):
     resposta = modulo.handler({}, None)
     assert resposta["statusCode"] == 501
