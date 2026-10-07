@@ -1,3 +1,4 @@
 -r src/requirements.txt
 pytest==9.1.1
 boto3==1.43.109
+moto[dynamodb]==5.2.3
