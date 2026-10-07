@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Pytest ao salvar domínio/testes",
+      "trigger": "PostFileSave",
+      "description": "Roda o pytest do backend ao salvar arquivos de domínio ou de teste e corrige o que quebrar.",
+      "matcher": "backend/(src/dominio|tests)/.*\\.py$",
+      "action": {
+        "type": "agent",
+        "prompt": "Um arquivo de backend/src/dominio ou backend/tests foi salvo. Rode `cd backend && pytest -q` (use o .venv da raiz se existir) e corrija o que quebrar antes de continuar. O domínio é Python puro, sem boto3."
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Lint a11y ao salvar TSX",
+      "trigger": "PostFileSave",
+      "description": "Roda o oxlint (com jsx-a11y) ao salvar componentes TSX e corrige violações.",
+      "matcher": "frontend/src/.*\\.tsx$",
+      "action": {
+        "type": "agent",
+        "prompt": "Um arquivo frontend/src/**/*.tsx foi salvo. Rode `cd frontend && npm run lint` (oxlint com o plugin jsx-a11y) e corrija todas as violações, seguindo a steering de acessibilidade (NBR 17225:2025)."
+      }
+    }
+  ]
+}
