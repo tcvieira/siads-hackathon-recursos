@@ -1,7 +1,8 @@
 # Design — SISGARES MVP
 
-Complementa o `ARQUITETURA.md`. Onde este documento diverge dele, vale este (porta 5173,
-DynamoDB Streams, AVP fora do MVP, Cognito provisionado por script e não pelo SAM).
+Complementa o `ARQUITETURA.md`. Onde este documento diverge dele, vale este: quatro Lambdas por
+domínio em vez de uma "Lambda de negócio", tabela única, DynamoDB Streams, AVP fora do MVP e
+Cognito provisionado por script, não pelo SAM.
 
 ## 1. Arquitetura
 
@@ -44,9 +45,10 @@ backend/
       catalogo.py  reservas.py  paineis.py  notificacoes.py
   tests/                        # pytest: test_regras.py, test_conflitos.py, test_auth.py, test_notificacao.py
 frontend/                       # Vite + React + TS + Tailwind + shadcn/ui
+  public/icones/                # cópia de docs/requisitos/Imagens (o Amplify só publica frontend/dist)
 scripts/
   cognito.sh                    # passos do ARQUITETURA.md, com callback 5173
-  seed.py                       # CSV -> DynamoDB (R11)
+  seed.py                       # CSV + cenário de demo -> DynamoDB (R11)
   smoke_amplify.py              # já existe: conferência do deploy no Amplify
 amplify.yml                     # já existe: build de frontend/ -> frontend/dist
 ```
@@ -66,34 +68,46 @@ instala as dependências do `requirements.txt` que estiver no `CodeUri`.
 
 ## 3. Modelo de dados (tabela única `sisgares`)
 
-| Item | PK | SK | GSI1PK / GSI1SK | GSI2PK / GSI2SK | Atributos |
-|---|---|---|---|---|---|
-| Ambiente | `CAT#AMBI` | `<id>` | | | desc, ativo, paiId, setores[] |
-| Disposição | `CAT#DISP` | `<id>` | | | desc, ativo, icone |
-| Recurso | `CAT#RECU` | `<id>` | | | desc, grupoId, limitado, disponibilidade, ativo, icone, ambientesVinculados[], setores[] |
-| Setor | `CAT#ENVO` | `<id>` | | | desc, email, ativo |
-| Vínculo setor | `CAT#VINC` | `AMBI#<id>#ENVO#<id>` ou `RECU#<id>#ENVO#<id>` | | | codigoServicoSnp? |
-| Config | `CAT#CONF` | `GLOBAL` | | | faixaInicio, faixaFim, antecedenciaMin, margemMin |
-| Reserva | `RESE#<id>` | `META` | | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[], recursos[{id,qtd}], solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
-| Agenda do período | `RESE#<id>` | `PER#<n>` | | `AGENDA` / `<inicio>#<id>` | inicio, termino, cancelada |
-| Ocupação de ambiente | `RESE#<id>` | `PER#<n>#AMBI#<a>` | `AMBI#<a>` / `<inicio>#<id>` | | inicio, termino |
-| Ocupação de recurso limitado | `RESE#<id>` | `PER#<n>#RECU#<r>` | `RECU#<r>` / `<inicio>#<id>` | | inicio, termino, qtd |
-| Lock | `LOCK#AMBI#<raiz>` / `LOCK#RECU#<r>` | `LOCK` | | | versao |
-| E-mail simulado | `RESE#<id>` | `EMAIL#<ts>#<setor>` | | `NOTIF` / `<ts>` | setorId, para, assunto, tipo(criada/alterada/cancelada), alteracoes[{campo,antes,depois}], html |
-| Pedido SNP | `RESE#<id>` | `SNP#<setor>` | | | numero, codigoServico, situacao |
+| Item | PK | SK | GSI1PK / GSI1SK | Atributos |
+|---|---|---|---|---|
+| Ambiente | `CAT#AMBI` | `<id>` | | desc, ativo, paiId, setores[] |
+| Disposição | `CAT#DISP` | `<id>` | | desc, ativo, icone |
+| Recurso | `CAT#RECU` | `<id>` | | desc, grupoId, limitado, disponibilidade, ativo, icone, ambientesVinculados[], setores[] |
+| Setor | `CAT#ENVO` | `<id>` | | desc, email, ativo |
+| Vínculo setor | `CAT#VINC` | `AMBI#<id>#ENVO#<id>` ou `RECU#<id>#ENVO#<id>` | | codigoServicoSnp? |
+| Config | `CAT#CONF` | `GLOBAL` | | faixaInicio, faixaFim, antecedenciaMin, margemMin |
+| Reserva | `RESE#<id>` | `META` | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[], recursos[{id,qtd}], solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
+| Agenda do período | `RESE#<id>` | `PER#<n>` | `AGENDA` / `<inicio>#<id>` | inicio, termino, cancelada, ambienteId, setoresIds[] |
+| Ocupação de ambiente | `OCUP#AMBI#<a>` | `<inicio>#<id>#<n>` | | termino, reservaId |
+| Ocupação de recurso limitado | `OCUP#RECU#<r>` | `<inicio>#<id>#<n>` | | termino, reservaId, qtd |
+| Lock | `LOCK#AMBI#<raiz>` / `LOCK#RECU#<r>` | `LOCK` | | versao |
+| E-mail simulado | `RESE#<id>` | `EMAIL#<ts>#<setor>` | `NOTIF` / `<ts>` | setorId, para, assunto, tipo(criada/alterada/cancelada), alteracoes[{campo,antes,depois}], html |
+| Pedido SNP | `RESE#<id>` | `SNP#<setor>` | | numero, codigoServico, situacao |
 
-IDs novos: `RESE#` usa contador atômico (`CTR#RESE`), começando acima do maior ID do seed. O número SNP usa o `CTR#SNP`.
+IDs novos: `RESE#` usa contador atômico (`CTR#RESE`), começando acima do maior ID do seed (17325). O número SNP usa o `CTR#SNP`.
+
+**Datas:** todo instante é gravado como `YYYY-MM-DDTHH:MM:SS-03:00`. O Pydantic converte para esse
+offset qualquer data recebida (inclusive com `Z`), porque as chaves `<inicio>#…` são comparadas como
+texto e um offset diferente quebraria a ordem.
+
+**Ocupações na tabela, não no índice:** as ocupações ficam em partições próprias da tabela
+(`OCUP#…`) para serem lidas com `ConsistentRead=true`. Um GSI é atualizado de forma assíncrona: uma
+gravação recém-confirmada poderia não aparecer na checagem seguinte e duas reservas iguais passariam
+(quebra da RN7). Por terem `PK` fora de `RESE#`, elas também não passam pelo filtro do stream.
 
 ### Algoritmo de conflito (RN5–RN7)
 
 1. `afetados = {a} ∪ ancestrais(a) ∪ descendentes(a)`. A hierarquia vem do catálogo, carregado uma vez por invocação.
-2. Para cada `x ∈ afetados` e cada período novo: Query no GSI1 com `GSI1PK = AMBI#x` e `GSI1SK < (término + margem)`. Depois, filtra em código `termino + margem > inicio` e descarta a própria reserva. No MVP isso lê todo o histórico do ambiente, o que é aceitável com o volume do seed. Próximo passo: particionar por mês.
-3. Recurso limitado: Query `GSI1PK = RECU#r`, `GSI1SK < término`, filtro `termino > inicio`, agrupando por reserva. Soma + qtd ≤ disponibilidade.
-4. **Gravação atômica (RN7):** `TransactWriteItems` com:
-   - `Update LOCK#AMBI#<raiz(a)>` (pai e filhos compartilham o lock) e `LOCK#RECU#r` de cada recurso limitado: `SET versao = versao + 1` com a condição `versao = :lida` (ou `attribute_not_exists`);
-   - Put do META e dos itens `PER#…`; na alteração, Delete dos itens antigos.
+2. Lê **primeiro** a versão dos locks (`GetItem` com `ConsistentRead`): `LOCK#AMBI#<raiz(a)>` (pai e filhos compartilham o lock) e `LOCK#RECU#r` de cada recurso limitado pedido. Lock inexistente conta como versão 0.
+3. Para cada `x ∈ afetados` e cada período novo: Query `PK = OCUP#AMBI#x` e `SK < (término + margem)`, com `ConsistentRead=true`. Depois, filtra em código `termino + margem > inicio` e descarta a própria reserva. No MVP isso lê todo o histórico do ambiente, o que é aceitável com o volume do seed. Próximo passo: particionar por mês.
+4. Recurso limitado: Query `PK = OCUP#RECU#r`, `SK < término`, `ConsistentRead=true`, filtro `termino > inicio`, agrupando por reserva. Soma + qtd ≤ disponibilidade.
+5. **Gravação atômica (RN7):** `TransactWriteItems` com:
+   - `Update` de cada lock lido no passo 2: `SET versao = :lida + 1` com a condição `versao = :lida` (ou `attribute_not_exists(versao)` quando era 0);
+   - Put do META e dos itens `PER#…` e `OCUP#…`; na alteração, Delete dos `PER#…` e `OCUP#…` antigos (as chaves saem do META antigo).
 
-   Se der `TransactionCanceled` por condição, relê, revalida uma vez e retorna 409 se continuar em conflito. Isso serializa as gravações de uma mesma árvore de ambientes sem bloquear as leituras.
+   Se der `TransactionCanceled` por condição, relê, revalida uma vez e retorna 409 se continuar em conflito. Como os locks são lidos antes das consultas, qualquer gravação confirmada depois dessa leitura muda a versão e cancela a transação; qualquer gravação anterior já aparece na consulta consistente.
+6. **Cancelamento:** `TransactWriteItems` com Update do META (`cancelada = true`, `versao + 1`), Update dos `PER#…` (`cancelada = true`) e Delete dos `OCUP#…`. Não precisa de lock, porque só libera espaço.
+7. **Limite da transação:** o `TransactWriteItems` aceita até 100 itens. Por isso a reserva tem no máximo 5 períodos e 10 recursos, dos quais até 5 limitados: na pior alteração são cerca de 90 itens (antigos + novos + locks + META).
 
 ## 4. API (HTTP API, todas com JWT)
 
@@ -103,16 +117,16 @@ IDs novos: `RESE#` usa contador atômico (`CTR#RESE`), começando acima do maior
 | GET `/ambientes/{id}/ocupacao?de&ate` | paineis | todos | Períodos ocupados do ambiente + ancestrais + descendentes (sem dados da reserva). |
 | POST `/reservas/validar` | reservas | solicitante, admin | Dry-run de R2–R4. Retorna `{ok, erros[{campo, periodoIndex?, codigo, mensagem, sugestao?}]}`. |
 | POST `/reservas` | reservas | solicitante, admin | Cria. 201 ou 400/409 com `erros[]`. |
-| GET `/reservas?minhas=1` | reservas | solicitante, admin | Reservas do usuário (GSI2 `SOLI#sub`), com status. |
+| GET `/reservas?minhas=1` | reservas | solicitante, admin | Reservas do usuário (GSI1 `SOLI#sub`), com status. |
 | GET `/reservas/{id}` | reservas | dono, admin, atendente do setor | Detalhe (mascarado para o atendente). |
 | PUT `/reservas/{id}` | reservas | dono, admin | Altera (R5.1). |
 | DELETE `/reservas/{id}` | reservas | dono, admin | Cancela (R5.2). |
-| GET `/painel/atendimento?de&ate` | paineis | atendente, admin | Cards (R8) com pedidos SNP. |
+| GET `/painel/atendimento?de&ate` | paineis | atendente, admin | Cards (R8) com pedidos SNP. Query no GSI1 `AGENDA` entre `de` e `ate`, filtro por `setoresIds` (atendente) e `BatchGetItem` dos META para montar os cards. |
 | GET `/notificacoes?de&ate` | paineis | atendente, admin | E-mails e pedidos SNP (atendente: só o seu setor). |
 
 Corpo da reserva:
 `{finalidade, participantes, ambienteId|null, complemento?, disposicaoId?, periodos:[{inicio, termino}], recursos:[{recursoId, qtd}]}`.
-Validação com Pydantic: tamanhos máximos, inteiros positivos, ISO com offset, no máximo 10 períodos e 20 recursos.
+Validação com Pydantic: tamanhos máximos, inteiros positivos, ISO com offset (convertido para −03:00), no máximo 5 períodos e 10 recursos, dos quais até 5 limitados (limite do `TransactWriteItems`, §3).
 
 Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAIXA`, `SEM_ANTECEDENCIA`, `RECURSO_INDISPONIVEL_AMBIENTE`, `CONFLITO_AMBIENTE`, `RECURSO_ESGOTADO`, `RESERVA_ENCERRADA`, `CANCELAMENTO_SEM_ANTECEDENCIA`.
 
@@ -126,9 +140,9 @@ Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAI
 ## 6. Notificações (Lambda `notificacoes`)
 
 - Gatilho: stream da tabela, com filtro `PK prefix "RESE#"` e `SK = "META"`. Batch 10, `bisect on error`, `MaximumRetryAttempts: 2`, sem DLQ no MVP: um registro que falha 3 vezes (1 tentativa + 2 retentativas) é descartado e o erro fica no log da função, sem travar o shard.
-- `INSERT` → tipo `criada`; `MODIFY` com `cancelada` passando a true → `cancelada`; outro `MODIFY` → `alterada`, com `diff_reservas(old, new)` sobre os campos período, ambiente, disposição, finalidade, participantes e recursos.
+- `INSERT` → tipo `criada`; `MODIFY` com `cancelada` passando a true → `cancelada`; outro `MODIFY` → `alterada`, com `diff_reservas(old, new)` sobre os campos período, ambiente, disposição, finalidade, participantes e recursos. `MODIFY` sem diferença nesses campos é ignorado (não gera e-mail).
 - Setores: união de `setores` do ambiente e dos recursos pedidos (na alteração, setores antigos ∪ novos, para avisar quem saiu também).
-- Para cada setor: grava `EMAIL#…`. Se algum vínculo desse setor com o ambiente ou com um recurso pedido tiver `codigoServicoSnp`, faz o upsert de `SNP#<setor>` (cria com um número novo, mantém o número na alteração, `situacao=cancelado` no cancelamento).
+- Para cada setor: grava `EMAIL#…`. Se algum vínculo desse setor com o ambiente ou com um recurso pedido tiver `codigoServicoSnp`, faz o upsert de `SNP#<setor>` (cria com um número novo, mantém o número na alteração, `situacao=cancelado` no cancelamento). Na alteração, o pedido de um setor que deixou de ser envolvido também passa a `situacao=cancelado`.
 - O HTML do e-mail é gerado com escape (`html.escape`) e é semântico. O frontend **não** renderiza esse HTML: mostra os campos estruturados (`alteracoes[]`), evitando XSS.
 
 ## 7. Frontend
@@ -147,18 +161,24 @@ Bibliotecas: react-router, @tanstack/react-query, react-oidc-context (oidc-clien
 Layout: skip link, `<header>`/`<nav aria-label="Principal">`/`<main>`, `document.title` por rota, foco no `<h1>` ao trocar de rota, tema com contraste ≥ 4.5:1 conferido, alvos ≥ 24px (44px no mobile), reflow em 320px (no mobile a grade vira a lista de horários de um dia).
 
 Config via `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOMAIN`, `VITE_API_URL` e `VITE_REDIRECT_URI`. O logout usa o endpoint `/logout` do domínio Cognito.
+Em dev, o Vite lê o `.env` da raiz do repositório (`envDir: '..'` no `vite.config.ts`); ele só expõe
+ao navegador as variáveis com prefixo `VITE_`, então as credenciais AWS do mesmo arquivo não vazam.
+No Amplify, as mesmas variáveis ficam na branch (§12.2).
+
+Ícones de disposição e de recurso: cópia de `docs/requisitos/Imagens/icones-*` em
+`frontend/public/icones/`, referenciados pelo nome do arquivo que vem do catálogo.
 
 ## 8. Segurança
 
 - CMK do KMS na tabela, HTTPS em todo lugar (Amplify, API GW, Cognito).
 - Roles mínimas: catalogo → `DynamoDBReadPolicy`; paineis → `DynamoDBReadPolicy`; reservas → `DynamoDBCrudPolicy`; notificacoes → leitura do stream + `DynamoDBCrudPolicy`. Todas com `kms:Decrypt` (e `GenerateDataKey` nas que escrevem, a confirmar: ver §12.5) na CMK.
 - CORS restrito à URL do Amplify e a `http://localhost:5173`. Throttling no stage (ex.: 50 rps, burst 100).
-- Nenhum e-mail ou dado pessoal nos logs (só `sub`). Os dados do seed são fictícios (`example.com`, setores do CSV).
+- Nenhum e-mail ou dado pessoal nos logs (só `sub`). Os dados pessoais do seed são fictícios (contas `example.com`, solicitantes inventados). Os e-mails dos setores são os endereços institucionais do CSV do kit e nunca recebem mensagem (envio simulado).
 - Como cada item acima é provisionado (recursos, policies, parâmetros) está em §12.
 
 ## 9. Testes
 
-- `backend/tests` com pytest, só sobre o domínio e o `auth` (sem AWS). Cada exemplo da seção 6 do caso vira um caso nomeado (`test_rn5_margem_1120_bloqueado`, `test_rn5_margem_1130_aceito`, `test_rn6_pai_filho`, `test_rn7_segundo_salvamento`, `test_rn8_projetor_2_bloqueado_1_aceito` etc.). A RN7 é testada no domínio, revalidando contra o estado atualizado; o lock transacional é verificado na demo.
+- `backend/tests` com pytest, só sobre o domínio e o `auth` (sem AWS). Cada exemplo da seção 6 do caso (RN1–RN13) vira um caso nomeado (`test_rn5_margem_1120_bloqueado`, `test_rn5_margem_1130_aceito`, `test_rn6_pai_filho`, `test_rn7_segundo_salvamento`, `test_rn8_projetor_2_bloqueado_1_aceito`, `test_rn9_kit_sala1_nao_aparece_sala2`, `test_rn11_copa_sem_codigo_so_email` etc.). A RN7 é testada no domínio, revalidando contra o estado atualizado; o lock transacional é verificado na demo.
 - Frontend: `npm run build` + `npm run lint` (oxlint com `jsx-a11y`). Checklist manual de teclado e axe nas 5 telas.
 
 ## 10. Decisões e premissas
@@ -167,21 +187,26 @@ Config via `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOM
 |---|---|
 | Uma unidade (PR/CE) | Não há dados de unidade macro. RN3/RN9 ficam só com a faixa global e os vínculos de ambiente. |
 | Reservas sintéticas geradas pelo seed | Falta o CSV da reserva. |
+| Cenário de demo no seed, relativo à data da apresentação | Só 2 reservas do CSV caem nos 8 dias seguintes à demo; sem o cenário, o painel do atendente e os bloqueios do roteiro (§11) não têm o que mostrar. |
+| Ocupações em partições da tabela com leitura consistente | O GSI é eventualmente consistente e deixaria passar reserva duplicada na corrida da RN7 (§3). |
 | `codigoServicoSnp` acrescentado no seed | Os CSVs não têm o campo. Sem ele a RN11 não aparece na demo. |
 | RN8 soma as reservas sobrepostas (literal da regra) | É mais simples e conservador que o pico simultâneo. Fica registrado como possível refinamento. |
 | Atendente vê e-mail mascarado | O caso pede "solicitante" no card, e o ARQUITETURA.md proíbe dados pessoais para o atendente (LGPD). |
 | AVP fora do MVP | 2h de prazo. A assinatura de `autorizar` já está pronta para a troca. |
 | Cognito por `scripts/cognito.sh`, fora do SAM | O `ARQUITETURA.md` lista o Cognito no SAM, mas também traz o passo a passo em CLI, já testado. O script é idempotente e o stack recebe só `UserPoolId` e `ClientId`. Com isso um `sam delete` não apaga as contas de demo. |
-| Primeiro `sam deploy` logo após o `template.yaml`, com handlers stub | Assim a tabela existe cedo e a Trilha D pode rodar o seed sem esperar a API. Consequência: as reservas do seed não geram e-mails nem pedidos SNP, porque o stub da `notificacoes` consome e descarta esses eventos do stream (§12.5). |
+| Primeiro `sam deploy` logo após o `template.yaml`, com handlers stub | Assim a tabela existe cedo e a Frente 1 pode rodar o seed sem esperar a API. Consequência: as reservas do seed não geram e-mails nem pedidos SNP, porque o stub da `notificacoes` consome e descarta esses eventos do stream (§12.5). |
 
 ## 11. Roteiro da demo (para o pitch)
 
-1. Solicitante: na grade do Auditório (Completo), aciona "Reservar às 09:00" → formulário preenchido → adiciona café e 1 projetor → salva.
-2. Tenta Parte A em horário sobreposto → bloqueio RN6. Tenta 11:20 após uma reserva até 11:00 → bloqueio RN5.
-3. Pede 2 projetores portáteis com 2 já reservados no horário → bloqueio RN8.
-4. Altera o horário → e-mail "ALTERADO" na tela de Notificações (como admin).
-5. Atendente (SMSG): cards dos próximos dias com o e-mail mascarado. Admin: pedido SNP gerado para SEART.
-6. Cancela com confirmação.
+`D1` é o primeiro dia útil depois da demo e `D2` o seguinte. As reservas F-RN5, F-RN6 e F-RN8 vêm do
+cenário do seed (R11.6).
+
+1. Solicitante: na grade do Auditório (Completo), semana de `D1`, mostra "Ocupado" 09:00–11:00 e "Margem de tolerância" até 11:30. Aciona "Reservar às 09:00" em `D2` → formulário preenchido → adiciona água e café e 1 projetor portátil → salva.
+2. Nova reserva no Auditório (Completo) em `D1` 11:20–12:00 → aviso ao vivo da RN5 ("livre a partir de 11:30"). Troca para `D1` 15:00–17:00 → bloqueio da RN6 (Parte A ocupada 14:00–16:00).
+3. Nova reserva na Sala de Reuniões – 9º andar em `D1` 15:00–17:00 com 1 projetor portátil → bloqueio da RN8 (os 2 disponíveis já estão reservados).
+4. Altera a reserva do passo 1 de 09:00 para 10:00 → tela Notificações (como admin): e-mail "ALTERADO" com o horário antigo e o novo; o pedido SNP da SEART mantém o número.
+5. Atendente (SMSG): cards dos próximos dias, com o e-mail do solicitante mascarado.
+6. Cancela a reserva do passo 1 com confirmação → e-mail de cancelamento e pedido SNP cancelado.
 
 ## 12. Infraestrutura e provisionamento
 
@@ -191,17 +216,17 @@ do `ARQUITETURA.md`. Cada parte tem uma ferramenta dona:
 | Parte | Ferramenta | Quando roda |
 |---|---|---|
 | App Amplify `d3vro5b84ccm5j` + branch `main` | AWS CLI (passo 0 do `ARQUITETURA.md`) | **Já feito.** Não recriar. |
-| Cognito: User Pool, domínio, app client, grupos, contas de demo | `scripts/cognito.sh` (passos 1–7 do `ARQUITETURA.md`) | Fase 0, uma vez (idempotente). |
-| CMK, tabela `sisgares`, 4 Lambdas + roles, HTTP API, event source do stream, log groups | AWS SAM: `backend/template.yaml` → `sam build && sam deploy` (stack `sisgares`) | Trilha B: primeiro deploy logo após o template (handlers stub) e redeploy com os handlers reais. |
-| Dados de catálogo, config, contadores e reservas sintéticas | `scripts/seed.py` | Trilha D, depois do primeiro deploy. |
-| Build e publicação do frontend | Amplify, por push na `main` (`amplify.yml`) | Fase 3, depois de cadastrar as variáveis `VITE_*`. |
+| Cognito: User Pool, domínio, app client, grupos, contas de demo | `scripts/cognito.sh` (passos 1–7 do `ARQUITETURA.md`) | Frente 1, uma vez (idempotente). |
+| CMK, tabela `sisgares`, 4 Lambdas + roles, HTTP API, event source do stream, log groups | AWS SAM: `backend/template.yaml` → `sam build && sam deploy` (stack `sisgares`) | Frente 1: primeiro deploy logo após o template (handlers stub) e redeploy com os handlers reais da Frente 2. |
+| Dados de catálogo, config, contadores, reservas sintéticas e cenário de demo | `scripts/seed.py` | Frente 1, depois do primeiro deploy e antes do redeploy. |
+| Build e publicação do frontend | Amplify, por push na `main` (`amplify.yml`) | A cada push; com as variáveis `VITE_*` cadastradas logo após o primeiro deploy. |
 
 ### 12.1 Ordem de dependência
 
 ```mermaid
 flowchart TD
   subgraph S[Etapa 3 — Stack SAM sisgares - backend/template.yaml]
-    K[CMK do KMS] --> T[(Tabela sisgares<br/>GSI1, GSI2, stream)]
+    K[CMK do KMS] --> T[(Tabela sisgares<br/>GSI1, stream)]
     K --> R[4 roles IAM]
     T --> R
     R --> F[4 Lambdas Python 3.12]
@@ -274,8 +299,8 @@ A ordem entre as Etapas 0–6 é responsabilidade de quem executa e está nas ta
 
 **DynamoDB** — no `template.yaml`
 - Propósito: tabela única com catálogo, reservas, ocupações, locks e notificações (§3).
-- Recursos: tabela `sisgares` com `PK`/`SK` (string), `GSI1` (`GSI1PK`/`GSI1SK`) e `GSI2`
-  (`GSI2PK`/`GSI2SK`), ambos com projeção `ALL` (modelo em §3).
+- Recursos: tabela `sisgares` com `PK`/`SK` (string) e `GSI1` (`GSI1PK`/`GSI1SK`), com projeção
+  `ALL` (modelo em §3). As ocupações não usam índice (leitura consistente na tabela, §3).
 - Configuração: `PAY_PER_REQUEST`; `SSESpecification` com `SSEType: KMS` e a CMK acima;
   `StreamSpecification: NEW_AND_OLD_IMAGES`.
 - Saídas: `TableName` (vai para `TABLE_NAME` das Lambdas e do seed) e o ARN do stream (usado
@@ -349,7 +374,7 @@ A ordem entre as Etapas 0–6 é responsabilidade de quem executa e está nas ta
 
 | Nome | Origem | Consumidor |
 |---|---|---|
-| `AMPLIFY_APP_ID` | `aws amplify list-apps` (tarefa 0.2) | `scripts/cognito.sh` (`APP_ID`), `aws amplify update-app`/`update-branch` |
+| `AMPLIFY_APP_ID` | `aws amplify list-apps` (tarefa 1.1) | `scripts/cognito.sh` (`APP_ID`), `aws amplify update-app`/`update-branch` |
 | `UserPoolId`, `ClientId` (parâmetros SAM) | `.env` (`COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`), via `--parameter-overrides` | JWT authorizer |
 | `AmplifyOrigin` (parâmetro SAM, padrão `https://main.d3vro5b84ccm5j.amplifyapp.com`) | URL do app Amplify | CORS |
 | `ApiUrl` (output) | stack `sisgares` | `.env` (`API_URL`), `VITE_API_URL` |
@@ -370,7 +395,7 @@ lidos do `.env`. Os **nomes** das variáveis novas entram no `.env-example`; os 
 
 - Conferência: `sam validate --lint`; `aws cloudformation describe-stacks --stack-name sisgares`
   com status `*_COMPLETE`; `curl` sem token em `ApiUrl/catalogo` → 401; login de demo redireciona
-  com `?code=`; `aws dynamodb describe-table` mostra `SSEType KMS`, os 2 GSIs e o stream.
+  com `?code=`; `aws dynamodb describe-table` mostra `SSEType KMS`, o GSI1 e o stream.
 - Remoção depois do hackathon: `sam delete --stack-name sisgares` (apaga a tabela; a CMK fica por
   `DeletionPolicy: Retain`), depois `aws kms schedule-key-deletion --key-id <id> --pending-window-in-days 7`,
   `delete-user-pool-domain` e `delete-user-pool`.
@@ -382,7 +407,7 @@ Decididas (aplicar no `template.yaml`):
 - Retenção dos log groups: 7 dias (`RetentionInDays: 7`).
 - `DeletionPolicy`/`UpdateReplacePolicy`: `Delete` na tabela e `Retain` na CMK (exclusão agendada à
   mão, §12.4).
-- As reservas do seed não geram e-mails nem pedidos SNP: o seed roda depois da B.2, quando a
+- As reservas do seed não geram e-mails nem pedidos SNP: o seed roda depois do primeiro deploy (1.5), quando a
   `notificacoes` implantada ainda é o stub, que descarta os eventos do stream (`LATEST`). A tela
   Notificações ganha dados na demo (passo 4 da §11).
 
@@ -390,6 +415,6 @@ Pendentes:
 
 | Pendência | Opção sugerida até decidir |
 |---|---|
-| `kms:GenerateDataKey` nas roles que escrevem (`reservas`, `notificacoes`) é de fato necessário? Para acesso via DynamoDB a documentação costuma citar só `kms:Decrypt` e `kms:DescribeKey`. | Manter o statement inline até a primeira escrita da B.7; se a escrita funcionar sem ele, remover (privilégio mínimo). |
+| `kms:GenerateDataKey` nas roles que escrevem (`reservas`, `notificacoes`) é de fato necessário? Para acesso via DynamoDB a documentação costuma citar só `kms:Decrypt` e `kms:DescribeKey`. | Manter o statement inline até a primeira escrita do redeploy (1.8); se a escrita funcionar sem ele, remover (privilégio mínimo). |
 | Plano B do frontend (S3 + CloudFront) não está detalhado no `ARQUITETURA.md` | Se acionado, decidir na hora se entra no SAM ou é feito por CLI, e atualizar callbacks e CORS. |
 | Sufixo único do domínio de login do Cognito (`DOMINIO`) | Pedido pelo `cognito.sh` na primeira execução (`read -p`) e gravado em `COGNITO_DOMAIN` no `.env`; as execuções seguintes reaproveitam esse valor. |

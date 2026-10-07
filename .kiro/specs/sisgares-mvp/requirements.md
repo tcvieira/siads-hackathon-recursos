@@ -67,7 +67,7 @@ documento do caso foi descartado pela equipe.
 ### R5 — Alterar e cancelar (F4)
 1. O solicitante DEVE poder alterar só as próprias reservas que não estejam `transcorrida` nem `cancelada`, com todas as validações de R2–R4 (RN12).
 2. O cancelamento DEVE exigir confirmação em diálogo (NBR 17225 5.9.12) e antecedência mínima até o menor início (RN12).
-3. O cancelamento é lógico: a reserva continua visível com status `cancelada` e libera ambiente e recursos.
+3. O cancelamento é lógico: a reserva continua visível com status `cancelada` e, na mesma transação, libera ambiente e recursos (as ocupações são removidas).
 
 ### R6 — Notificações e SNP simulado (F5, F6)
 1. QUANDO uma reserva for criada, alterada ou cancelada, ENTÃO o sistema DEVE gerar, **de forma assíncrona e orientada a evento** (DynamoDB Streams), um e-mail simulado para cada setor vinculado ao ambiente (`envolvido-ambiente`) ou a um recurso pedido (`envolvido-recurso`), endereçado a `ENVO_EMAIL` (RN10).
@@ -96,13 +96,21 @@ documento do caso foi descartado pela equipe.
 2. Cada tela DEVE passar no axe sem violações A/AA.
 
 ### R11 — Dados
-1. Um script de seed DEVE carregar os CSVs no DynamoDB (o `PRES_ID` "14.207" vira inteiro 14207 e as datas `dd/mm/aaaa hh:mm:ss` viram ISO −03:00).
-2. Como não há CSV da reserva, o seed DEVE gerar dados fictícios para cada `RESE_ID` (finalidade, participantes, disposição, solicitante fictício e ambiente ativo escolhido sem gerar conflito; se não houver ambiente livre, "local próprio"). Pelo menos 3 reservas DEVEM ser do `solicitante@example.com`.
-3. O seed DEVE acrescentar `codigoServicoSnp` em vínculos de TI (SEART × recursos 6, 8, 96) e de logística (SELOG × recurso 5) para demonstrar a RN11. Copa (SMSG × 1, 2, 3) fica sem código.
-4. Config: `{faixaInicio: "07:00", faixaFim: "20:00", antecedenciaMin: 120, margemMin: 30}`.
+1. Um script de seed DEVE carregar os CSVs no DynamoDB. Números com ponto de milhar (`PRES_ID`, `RESE_ID`, `SOLI_ID`, ex.: "17.325") viram inteiros, e as datas `dd/mm/aaaa hh:mm:ss` viram ISO −03:00.
+2. Os recursos de cada reserva DEVEM vir de `dados-solicitacao.csv` (`SOLI_QTD` vazio → 1). Reserva sem linha de solicitação fica só com o ambiente.
+3. Como não há CSV da reserva, o seed DEVE gerar para cada `RESE_ID` finalidade, participantes, disposição ativa e solicitante fictício, e escolher um ambiente ativo **compatível com os recursos vinculados pedidos (RN9)** e sem conflito (RN5, RN6) com as reservas já gravadas. Se nenhum servir, usa "local próprio", com complemento preenchido e sem os recursos vinculados a ambiente. Os períodos do CSV são históricos e NÃO passam por RN3 nem RN4 (15 deles estão fora da faixa ou atravessam dias). *Com os CSVs atuais: 185 reservas com ambiente e 7 em local próprio.*
+4. O seed DEVE acrescentar `codigoServicoSnp` em vínculos de TI (SEART × recursos 6, 8, 96) e de logística (SELOG × recurso 5) para demonstrar a RN11. Copa (SMSG × 1, 2, 3) fica sem código.
+5. Config: `{faixaInicio: "07:00", faixaFim: "20:00", antecedenciaMin: 120, margemMin: 30}`.
+6. Só 8 das 192 reservas do CSV estão no futuro (2 nos próximos 8 dias), então o seed DEVE gravar um **cenário de demo** relativo a `--data-demo` (padrão: hoje), com `D1` = primeiro dia útil depois dela. As reservas fixas são gravadas antes das históricas, e a alocação das históricas respeita também a RN8 em relação a elas (se exceder, o recurso limitado sai da reserva histórica):
+   - F-RN5: Auditório (Completo) (1), `D1` 09:00–11:00.
+   - F-RN6: Auditório (Parte A) (5), `D1` 14:00–16:00.
+   - F-RN8: Sala de Reuniões – 9º andar (3), `D1` 14:00–16:00, com 2 × Projetor Multimídia Portátil (6, disponibilidade 2).
+   - Pelo menos 6 reservas entre a data da demo e +7 dias, em ambientes do SMSG e com serviço de copa, para o painel do atendente.
+   - Pelo menos 3 reservas do `solicitante@example.com` (uma transcorrida e uma prevista, no mínimo). O `sub` dessa conta DEVE ser lido do Cognito (`admin-get-user`), porque a reserva guarda `solicitanteSub`.
+7. Reexecutar o seed NÃO DEVE sobrescrever itens existentes (`attribute_not_exists`), para não gerar eventos no stream nem e-mails "alterada" vazios.
 
 ### R12 — Testes
-1. As regras RN1–RN8, RN12 e RN13 DEVEM ter testes pytest no domínio, com cada exemplo da tabela da seção 6 do caso como caso de teste.
+1. Todas as regras da seção 6 do caso (RN1–RN13) DEVEM ter testes pytest no domínio, com cada exemplo da tabela como caso de teste. RN9 cobre o filtro de recursos por ambiente; RN10 e RN11 cobrem `setores_envolvidos` e `precisa_snp`; RN12 cobre também `diff_reservas`.
 2. O domínio DEVE ser Python puro, sem boto3, e receber `agora` injetado.
 
 ### R13 — Infraestrutura e provisionamento
