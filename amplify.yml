@@ -1,0 +1,23 @@
+# Build do frontend React + Vite (frontend/) no Amplify Hosting.
+# Cada push no branch main dispara este build. Só o conteúdo de baseDirectory é
+# publicado: o resto do repositório (docs/, scripts/) nunca vai para a URL pública.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 22 && nvm use 22
+        - (cd frontend && npm ci)
+    build:
+      commands:
+        # O subshell evita que o cd valha para os comandos seguintes (o Amplify roda
+        # todas as fases no mesmo shell).
+        - (cd frontend && npm run build)
+  artifacts:
+    # Pasta de saída padrão do Vite.
+    baseDirectory: frontend/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - frontend/node_modules/**/*
