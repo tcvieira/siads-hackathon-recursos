@@ -40,9 +40,9 @@ export default function Layout() {
       >
         Pular para o conteúdo
       </a>
-      <header className="border-b bg-background">
+      <header className="bg-cabecalho text-white shadow-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <p className="text-lg font-semibold">SISGARES</p>
+          <p className="text-lg font-bold tracking-wide">SISGARES</p>
           <nav aria-label="Principal" className="flex-1">
             <ul className="flex flex-wrap gap-1">
               {MENU.filter((item) => pode(usuario, item.papeis)).map((item) => (
@@ -51,8 +51,8 @@ export default function Layout() {
                     to={item.para}
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex min-h-9 items-center rounded-md px-3 py-1.5 text-sm font-medium hover:bg-muted',
-                        isActive && 'bg-primary text-primary-foreground hover:bg-primary',
+                        'inline-flex min-h-9 items-center rounded-md px-3 py-1.5 text-sm font-semibold hover:bg-white/15',
+                        isActive && 'bg-white/20 underline decoration-2 underline-offset-8',
                       )
                     }
                   >
@@ -67,7 +67,7 @@ export default function Layout() {
               <label className="flex items-center gap-2">
                 <span>Papel simulado</span>
                 <select
-                  className="min-h-9 rounded-md border border-input bg-background px-2"
+                  className="min-h-9 rounded-md border border-white/70 bg-cabecalho px-2"
                   value={usuario.papel}
                   onChange={(e) => {
                     trocarPapel(e.target.value as Papel)
@@ -83,10 +83,10 @@ export default function Layout() {
               </label>
             )}
             <p>
-              <span className="text-muted-foreground">{NOME_PAPEL[usuario.papel]}:</span> {usuario.email}
+              <span className="font-semibold">{usuario.email}</span> <span className="block text-xs text-white/85 sm:inline">({NOME_PAPEL[usuario.papel]})</span>
             </p>
             {!trocarPapel && (
-              <Button variant="outline" size="sm" onClick={sair}>
+              <Button variant="outline" size="sm" className="border-white/70 bg-transparent text-white hover:bg-white/15 hover:text-white" onClick={sair}>
                 <LogOut aria-hidden="true" />
                 Sair
               </Button>
@@ -94,7 +94,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 outline-none">
+      <main id="conteudo" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 pb-8 outline-none">
         <Outlet />
       </main>
     </div>

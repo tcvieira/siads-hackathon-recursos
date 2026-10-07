@@ -72,7 +72,7 @@ function ItemReserva({ reserva, catalogo }: { reserva: Reserva; catalogo?: Catal
   }
 
   return (
-    <li className="space-y-3 rounded-lg border p-4">
+    <li className="space-y-3 rounded-md bg-card p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 ref={titulo} tabIndex={-1} className="min-w-0 text-lg font-semibold break-words">
           {reserva.finalidade}

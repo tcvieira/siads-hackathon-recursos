@@ -103,7 +103,7 @@ function CartaoReserva({ card, periodo, catalogo }: Item & { catalogo?: Catalogo
   const horario = `${formatarHora(periodo.inicio)} às ${formatarHora(periodo.termino)}`
 
   return (
-    <article aria-label={`${horario}, ${ambiente}`} className="h-full space-y-3 rounded-lg border bg-card p-4 text-card-foreground">
+    <article aria-label={`${horario}, ${ambiente}`} className="h-full space-y-3 rounded-md bg-card p-4 shadow-sm text-card-foreground">
       <header className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="font-semibold break-words">
           <span className="block tabular-nums">{horario}</span>

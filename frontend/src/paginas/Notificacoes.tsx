@@ -73,7 +73,7 @@ export default function Notificacoes() {
               <ul className="space-y-3">
                 {emails.map((e) => (
                   <li key={`${e.reservaId}-${e.setorId}-${e.ts}`}>
-                    <article className="space-y-2 rounded-lg border p-4 break-words">
+                    <article className="space-y-2 rounded-md bg-card p-4 shadow-sm break-words">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={VARIANTE[e.tipo]}>{TIPOS[e.tipo]}</Badge>
                         <h3 className="font-medium">{e.assunto}</h3>

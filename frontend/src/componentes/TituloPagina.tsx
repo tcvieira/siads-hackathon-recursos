@@ -10,7 +10,7 @@ export function TituloPagina({ children, className }: { children: string; classN
     document.title = `${children} — SISGARES`
   }, [children])
   return (
-    <h1 tabIndex={-1} className={cn('scroll-mt-4 text-2xl font-semibold tracking-tight', className)}>
+    <h1 tabIndex={-1} className={cn('faixa-pagina mb-6 scroll-mt-4 bg-faixa py-6 text-3xl font-normal break-words', className)}>
       {children}
     </h1>
   )
