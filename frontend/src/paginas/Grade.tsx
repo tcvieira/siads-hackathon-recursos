@@ -79,15 +79,17 @@ export default function Grade({ painel = false }: { painel?: boolean }) {
   const [aberto, setAberto] = useState(false)
   const idBase = useId()
 
-  const ambienteId = params.get('ambiente')
   const dia = params.get('dia') ?? hoje()
   const semana = inicioDaSemana(dia)
   const dias = diasDaSemana(semana)
 
   const catalogo = useCatalogo()
+  const ambientes = (catalogo.data?.ambientes ?? []).filter((a) => a.ativo)
+  // Sem ambiente na URL, abre no primeiro ativo para a tela não começar vazia.
+  const escolhido = params.get('ambiente')
+  const ambienteId = escolhido ?? ambientes[0]?.id ?? null
   const ocupacao = useOcupacao(ambienteId, inicioDoDia(semana), inicioDoDia(somarDias(semana, 7)))
 
-  const ambientes = (catalogo.data?.ambientes ?? []).filter((a) => a.ativo)
   const ambiente = ambientes.find((a) => a.id === ambienteId)
   const config = catalogo.data?.config
 
@@ -116,12 +118,12 @@ export default function Grade({ painel = false }: { painel?: boolean }) {
     return `?${novo}`
   }
 
-  // Ao escolher um ambiente no painel, o painel some e leva o foco junto: leva para o combobox.
-  const tinhaAmbiente = useRef(!!ambienteId)
+  // Ao escolher um ambiente pelo painel, leva o foco para o combobox (o Layout só foca o h1 ao mudar de rota).
+  const ultimoEscolhido = useRef(escolhido)
   useEffect(() => {
-    if (painel && ambienteId && !tinhaAmbiente.current) document.getElementById(ids.combo)?.focus()
-    tinhaAmbiente.current = !!ambienteId
-  }, [painel, ambienteId, ids.combo])
+    if (painel && escolhido && escolhido !== ultimoEscolhido.current) document.getElementById(ids.combo)?.focus()
+    ultimoEscolhido.current = escolhido
+  }, [painel, escolhido, ids.combo])
 
   return (
     <section className="space-y-6">
@@ -196,7 +198,7 @@ export default function Grade({ painel = false }: { painel?: boolean }) {
 
       {catalogo.isError && <p role="alert">Não foi possível carregar o catálogo: {catalogo.error.message}</p>}
       {!ambienteId && catalogo.data && !painel && <p>Escolha um ambiente para ver os horários livres e ocupados.</p>}
-      {!ambienteId && config && painel && (
+      {config && painel && (
         <PainelOcupacao ambientes={ambientes} config={config} semana={semana} agora={agora} hrefAmbiente={hrefAmbiente} />
       )}
       {ambienteId && ocupacao.isPending && <output className="block">Carregando ocupação…</output>}
