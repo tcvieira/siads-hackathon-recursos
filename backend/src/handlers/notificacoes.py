@@ -1,9 +1,9 @@
 """Lambda `notificacoes`: consumidor do DynamoDB Stream (design.md §6; R6, RN10, RN11, RN12).
 
-Para cada INSERT/MODIFY de `RESE#<id>` / `META`, grava um `EMAIL#<ts>#<setor>` por setor envolvido
-e faz o upsert dos `SNP#<setor>`, tudo na mesma transação do marcador `EVT#<eventID>` (idempotente
-entre retentativas). MODIFY sem diferença e REMOVE não geram nada. Erros inesperados sobem: o
-event source faz bisect do lote e retenta.
+Para cada INSERT/MODIFY de `RESE#<id>` / `META`, grava um `EMAIL#<ts>#<setor>#<eventID>` por setor
+envolvido e faz o upsert dos `SNP#<setor>`, tudo na mesma transação do marcador `EVT#<eventID>`
+(idempotente entre retentativas). MODIFY sem diferença e REMOVE não geram nada. Erros inesperados
+sobem: o event source faz bisect do lote e retenta.
 """
 
 from datetime import datetime

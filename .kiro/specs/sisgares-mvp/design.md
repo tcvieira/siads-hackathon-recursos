@@ -83,7 +83,7 @@ instala as dependências do `requirements.txt` que estiver no `CodeUri`.
 | Ocupação de recurso limitado | `OCUP#RECU#<r>` | `<inicio>#<id>#<n>` | | reservaId, inicio, termino, qtd |
 | Lock | `LOCK#AMBI#<raiz>` / `LOCK#RECU#<r>` | `LOCK` | | versao |
 | Contador | `CTR#RESE` / `CTR#SNP` | `CTR` | | valor (último número emitido) |
-| E-mail simulado | `RESE#<id>` | `EMAIL#<ts>#<setor>` | `NOTIF` / `<ts>` | setorId, para, assunto, tipo(criada/alterada/cancelada), alteracoes[{campo,antes,depois}], html |
+| E-mail simulado | `RESE#<id>` | `EMAIL#<ts>#<setor>#<eventID>` | `NOTIF` / `<ts>` | setorId, para, assunto, tipo(criada/alterada/cancelada), alteracoes[{campo,antes,depois}], html |
 | Pedido SNP | `RESE#<id>` | `SNP#<setor>` | | numero, codigoServico, situacao |
 
 IDs novos: `RESE#` usa contador atômico (`CTR#RESE`): `UpdateItem` com `ADD valor :1` e `ReturnValues=UPDATED_NEW`, e o valor devolvido é o novo ID. O seed grava em `valor` o último ID que usou (CSV + cenário de demo). O número SNP usa o `CTR#SNP` (começa em 0). IDs, `<n>` dos períodos (a partir de 0) e IDs de catálogo são strings.
@@ -117,13 +117,13 @@ gravação recém-confirmada poderia não aparecer na checagem seguinte e duas r
 |---|---|---|---|
 | GET `/catalogo` | catalogo | todos | Ambientes, disposições, grupos, recursos (com vínculos e limitado), config. Sem e-mail de setor. |
 | GET `/ambientes/{id}/ocupacao?de&ate` | paineis | todos | Períodos ocupados do ambiente + ancestrais + descendentes (sem dados da reserva). |
-| POST `/reservas/validar` | reservas | solicitante, admin | Dry-run de R2–R4. Retorna `{ok, erros[{campo, periodoIndex?, codigo, mensagem, sugestao?}]}`. |
+| POST `/reservas/validar` | reservas | solicitante, admin | Dry-run de R2–R4. Responde sempre 200 `{ok, erros[{campo, periodoIndex?, codigo, mensagem, sugestao?}]}`, inclusive com corpo malformado (erro de formato vira item de `erros`). |
 | POST `/reservas` | reservas | solicitante, admin | Cria. 201 ou 400/409 com `RespostaErro` (`{erros: Erro[]}`). |
 | GET `/reservas?minhas=1` | reservas | solicitante, admin | Reservas do usuário (GSI1 `SOLI#sub`), com status. |
 | GET `/reservas/{id}` | reservas | dono, admin, atendente do setor | Detalhe (mascarado para o atendente). |
 | PUT `/reservas/{id}` | reservas | dono, admin | Altera (R5.1). |
 | DELETE `/reservas/{id}` | reservas | dono, admin | Cancela (R5.2). |
-| GET `/painel/atendimento?de&ate` | paineis | atendente, admin | Cards (R8) com pedidos SNP. Query no GSI1 `AGENDA` entre `de` e `ate`, filtro por `setoresIds` (atendente) e `BatchGetItem` dos META para montar os cards. |
+| GET `/painel/atendimento?de&ate` | paineis | atendente, admin | Cards (R8) com pedidos SNP. Query no GSI1 `AGENDA` de `de − 31 dias` até `ate` com filtro `termino > de` (pega o período que começou antes da janela), `BatchGetItem` consistente dos META e filtro por `setoresIds` e `cancelada` no META (o `PER#` do GSI é eventual). |
 | GET `/notificacoes?de&ate` | paineis | atendente, admin | E-mails e pedidos SNP (atendente: só o seu setor). |
 
 Corpo da reserva:
@@ -132,7 +132,9 @@ Validação com Pydantic: tamanhos máximos, inteiros positivos, ISO com offset 
 
 Erros 400/409 sempre no formato `RespostaErro` (`{erros: Erro[]}`); 403 e 404 levam só `{mensagem}` genérica (R9.3).
 
-Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAIXA`, `SEM_ANTECEDENCIA`, `RECURSO_INDISPONIVEL_AMBIENTE`, `CONFLITO_AMBIENTE`, `RECURSO_ESGOTADO`, `RESERVA_ENCERRADA`, `CANCELAMENTO_SEM_ANTECEDENCIA`.
+Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAIXA`, `SEM_ANTECEDENCIA`, `RECURSO_INDISPONIVEL_AMBIENTE`, `CONFLITO_AMBIENTE`, `RECURSO_ESGOTADO`, `RESERVA_ENCERRADA`, `CANCELAMENTO_SEM_ANTECEDENCIA`, `CONFLITO_CONCORRENTE`.
+
+`CONFLITO_CONCORRENTE` (409) sai quando a transação é cancelada por uma gravação simultânea que não gera sobreposição: a segunda tentativa do §3.5 falha de novo, ou o cancelamento/alteração usa uma versão da reserva que já mudou. Dois períodos que se cruzam no mesmo pedido dão `PERIODO_INVALIDO` no de maior índice.
 
 ## 5. Autorização
 
