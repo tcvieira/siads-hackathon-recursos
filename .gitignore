@@ -46,6 +46,8 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+# AWS SAM
+.aws-sam/
 
 # Type checkers / linters
 .mypy_cache/

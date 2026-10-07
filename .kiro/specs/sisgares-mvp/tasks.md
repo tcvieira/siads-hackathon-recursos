@@ -46,17 +46,17 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
 
 ## Fase 0 — Base comum (0:00–0:10, uma sessão, antes das frentes)
 
-- [ ] 0.1 Esqueleto do backend conforme `design.md` §2, sem lógica. _R11, R13.1_
-  - [ ] Pastas `backend/src/{dominio,comum,handlers}` com `__init__.py` e `backend/tests/`.
-  - [ ] `handlers/{catalogo,reservas,paineis,notificacoes}.py` com `handler` stub (HTTP: 501; stream: retorna sem erro), para o template da Frente 1 já apontar para eles.
-  - [ ] `backend/src/requirements.txt` (aws-lambda-powertools, pydantic v2) e `backend/requirements-dev.txt` (pytest, boto3), com versões exatas.
-  - [ ] `.aws-sam/` no `.gitignore`.
-- [ ] 0.2 Congelar os contratos: `backend/src/dominio/modelos.py` (dataclasses, sem Pydantic e sem boto3) e `frontend/src/api/tipos.ts` com o mesmo shape, mais os códigos de erro (`design.md` §4). _R2, R12.2_
-- [ ] 0.3 Nomes das variáveis novas no `.env-example`, sem valores: `AMPLIFY_APP_ID`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_DOMAIN`, `API_URL`, `TABLE_NAME` e as `VITE_*` (`design.md` §7, §12.3). _R13.6_
-- [ ] 0.4 Hooks do Kiro (contam no critério "uso de hooks" e ajudam desde o início), criados pelo painel Agent Hooks, no evento de salvar arquivo:
-  - [ ] `backend/src/dominio/**` e `backend/tests/**` → rodar `cd backend && pytest -q` e corrigir o que quebrar.
-  - [ ] `frontend/src/**/*.tsx` → rodar `cd frontend && npm run lint` (oxlint com `jsx-a11y`) e corrigir violações.
-- [ ] 0.5 Commit e push na `main` (**M0**).
+- [x] 0.1 Esqueleto do backend conforme `design.md` §2, sem lógica. _R11, R13.1_
+  - [x] Pastas `backend/src/{dominio,comum,handlers}` com `__init__.py` e `backend/tests/`.
+  - [x] `handlers/{catalogo,reservas,paineis,notificacoes}.py` com `handler` stub (HTTP: 501; stream: retorna sem erro), para o template da Frente 1 já apontar para eles.
+  - [x] `backend/src/requirements.txt` (aws-lambda-powertools, pydantic v2) e `backend/requirements-dev.txt` (pytest, boto3), com versões exatas.
+  - [x] `.aws-sam/` no `.gitignore`.
+- [x] 0.2 Congelar os contratos: `backend/src/dominio/modelos.py` (dataclasses, sem Pydantic e sem boto3) e `frontend/src/api/tipos.ts` com o mesmo shape, mais os códigos de erro (`design.md` §4). _R2, R12.2_
+- [x] 0.3 Nomes das variáveis novas no `.env-example`, sem valores: `AMPLIFY_APP_ID`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_DOMAIN`, `API_URL`, `TABLE_NAME` e as `VITE_*` (`design.md` §7, §12.3). _R13.6_
+- [x] 0.4 Hooks do Kiro (contam no critério "uso de hooks" e ajudam desde o início), criados pelo painel Agent Hooks, no evento de salvar arquivo:
+  - [x] `backend/src/dominio/**` e `backend/tests/**` → rodar `cd backend && pytest -q` e corrigir o que quebrar.
+  - [x] `frontend/src/**/*.tsx` → rodar `cd frontend && npm run lint` (oxlint com `jsx-a11y`) e corrigir violações.
+- [x] 0.5 Commit e push na `main` (**M0**).
 
 ---
 
