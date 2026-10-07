@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { ReservaEntrada } from './api/tipos'
+import type { Reserva, ReservaEntrada } from './api/tipos'
 import { Grade } from './grade/Grade'
 import { FormularioReserva } from './reserva/FormularioReserva'
+import { MinhasReservas } from './minhas-reservas/MinhasReservas'
 import './App.css'
 
 /**
@@ -10,17 +11,46 @@ import './App.css'
  * um único <h1> por página (5.3.3) e <main> com foco programável.
  *
  * O roteamento real (react-router) e a autenticação entram nas tarefas 3.2/3.3.
- * Por ora o App alterna entre a grade e o formulário por estado, para demonstrar
- * o fluxo "Reservar às HH:MM" → formulário pré-preenchido (3.4).
+ * Por ora o App alterna entre as telas por estado, para demonstrar os fluxos
+ * grade → formulário e minhas reservas → editar.
  */
 
-type Tela = { nome: 'grade' } | { nome: 'formulario'; inicial: Partial<ReservaEntrada> }
+type Tela =
+  | { nome: 'grade' }
+  | { nome: 'minhas' }
+  | { nome: 'formulario'; inicial: Partial<ReservaEntrada> }
 
 /** Converte Date local para o valor de <input type="datetime-local"> (YYYY-MM-DDTHH:MM). */
 function paraDatetimeLocal(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+/** Monta o pré-preenchimento do formulário a partir de uma reserva existente (Editar). */
+function reservaParaEntrada(r: Reserva): Partial<ReservaEntrada> {
+  return {
+    ambienteId: r.ambienteId,
+    complemento: r.complemento ?? null,
+    disposicaoId: r.disposicaoId ?? null,
+    finalidade: r.finalidade,
+    participantes: r.participantes,
+    recursos: r.recursos,
+    periodos: r.periodos.map((p) => ({
+      inicio: paraDatetimeLocal(new Date(p.inicio)),
+      termino: paraDatetimeLocal(new Date(p.termino)),
+    })),
+  }
+}
+
+interface ItemMenu {
+  nome: Tela['nome']
+  rotulo: string
+}
+const MENU: ItemMenu[] = [
+  { nome: 'grade', rotulo: 'Grade de horários' },
+  { nome: 'minhas', rotulo: 'Minhas reservas' },
+  { nome: 'formulario', rotulo: 'Nova reserva' },
+]
 
 function App() {
   const [tela, setTela] = useState<Tela>({ nome: 'grade' })
@@ -36,6 +66,12 @@ function App() {
     })
   }
 
+  function irPara(nome: Tela['nome']) {
+    if (nome === 'formulario') setTela({ nome: 'formulario', inicial: {} })
+    else if (nome === 'grade') setTela({ nome: 'grade' })
+    else setTela({ nome: 'minhas' })
+  }
+
   return (
     <>
       <a className="skip-link" href="#conteudo">
@@ -49,42 +85,33 @@ function App() {
         </div>
         <nav aria-label="Principal">
           <ul className="menu">
-            <li>
-              <a
-                href="#conteudo"
-                aria-current={tela.nome === 'grade' ? 'page' : undefined}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setTela({ nome: 'grade' })
-                }}
-              >
-                Grade de horários
-              </a>
-            </li>
-            <li>
-              <a
-                href="#conteudo"
-                aria-current={tela.nome === 'formulario' ? 'page' : undefined}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setTela({ nome: 'formulario', inicial: {} })
-                }}
-              >
-                Nova reserva
-              </a>
-            </li>
+            {MENU.map((item) => (
+              <li key={item.nome}>
+                <a
+                  href="#conteudo"
+                  aria-current={tela.nome === item.nome ? 'page' : undefined}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    irPara(item.nome)
+                  }}
+                >
+                  {item.rotulo}
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
       </header>
 
       <main id="conteudo" tabIndex={-1}>
-        {tela.nome === 'grade' ? (
-          <Grade onReservar={iniciarReserva} />
-        ) : (
-          <FormularioReserva
-            inicial={tela.inicial}
-            onSalvar={() => setTela({ nome: 'grade' })}
+        {tela.nome === 'grade' && <Grade onReservar={iniciarReserva} />}
+        {tela.nome === 'minhas' && (
+          <MinhasReservas
+            onEditar={(r) => setTela({ nome: 'formulario', inicial: reservaParaEntrada(r) })}
           />
+        )}
+        {tela.nome === 'formulario' && (
+          <FormularioReserva inicial={tela.inicial} onSalvar={() => setTela({ nome: 'minhas' })} />
         )}
       </main>
     </>

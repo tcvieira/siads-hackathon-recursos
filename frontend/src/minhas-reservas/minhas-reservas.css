@@ -1,0 +1,100 @@
+.lista-reservas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 48rem;
+}
+
+.cartao-reserva {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 1rem;
+}
+.cartao-reserva__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.cartao-reserva__titulo {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Badge de status: cor de fundo + TEXTO (o texto é o rótulo; cor é reforço). */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+.badge--prevista {
+  color: #0b3d91;
+  background: #e9f2ff;
+}
+.badge--em_andamento {
+  color: #1b5e20;
+  background: #e6f4ea;
+}
+.badge--transcorrida {
+  color: #41465b;
+  background: #eceef2;
+}
+.badge--cancelada {
+  color: #7a0016;
+  background: #fdecea;
+}
+
+.cartao-reserva__dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0;
+}
+.cartao-reserva__dados dt {
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+}
+.cartao-reserva__dados dd {
+  margin: 0;
+}
+
+.cartao-reserva__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+.cartao-reserva__nota {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+/* Botão de cancelar (leve): texto vermelho + borda; vira sólido no hover. */
+.botao-perigo-leve {
+  min-height: 2.5rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--cor-fundo);
+  color: var(--cor-perigo);
+  border: 1px solid var(--cor-perigo);
+  border-radius: var(--raio);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.botao-perigo-leve:hover:not(:disabled) {
+  background: var(--cor-perigo);
+  color: #ffffff;
+}
+
+/* Estado desabilitado: contraste de componente >= 3:1 preservado + cursor. */
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
