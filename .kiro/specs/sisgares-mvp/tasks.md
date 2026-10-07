@@ -27,7 +27,7 @@ Regras:
 | Marco | Quando (aprox.) | Quem entrega | O que destrava |
 |---|---|---|---|
 | M0 — base e contratos no `main` | 0:10 | Fase 0 | Início das três frentes |
-| M1 — Cognito pronto (`COGNITO_*` no `.env`) | 0:35 | Frente 1 (1.2). Pool, client e grupos **feitos**; faltam as contas de demo | Login real na Frente 3 (3.3); parâmetros do deploy (1.5) |
+| M1 — Cognito pronto (`COGNITO_*` no `.env`) | 0:35 | Frente 1 (1.2). **Feito**: pool, client, grupos e as 3 contas | Login real na Frente 3 (3.3); parâmetros do deploy (1.5) |
 | M2 — `hierarquia` e `conflitos` verdes | 0:45 | Frente 2 (2.1, 2.3) | `repo.py` e handlers (2.7–2.9) |
 | M3 — stack no ar com stubs (`API_URL`, `TABLE_NAME`) | 0:50 | Frente 1 (1.5) | Variáveis `VITE_*` (1.6); seed (1.7). **Feito**: `API_URL`, `TABLE_NAME` e `VITE_*` no `.env` |
 | M4 — handlers reais prontos | 1:25 | Frente 2 (2.11) | Redeploy (1.8) |
@@ -72,7 +72,7 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] Cada `create-*` (pool, domínio, client, grupos, contas) é precedido de consulta e pula o que já existe; a segunda execução não cria nada.
   - [x] Senha de demo lida sem eco (`read -s`, ou `SENHA_DEMO` exportada), só quando alguma conta precisa ser criada; fora do `.env` e do repositório.
   - [x] `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID` e `COGNITO_DOMAIN` (só o prefixo) gravados no `.env`.
-  - [ ] Conferência do passo 7: o atendente tem `custom:setorId`; as 3 contas estão no grupo certo.
+  - [x] Conferência do passo 7: o atendente tem `custom:setorId`; as 3 contas estão no grupo certo.
   - [ ] Teste de login no Cognito redireciona para `http://localhost:5173/?code=...`.
 - [x] 1.3 Regra de rewrite de SPA no app Amplify (independe do resto): `aws amplify update-app --app-id "$AMPLIFY_APP_ID" --custom-rules '[{"source":"</^[^.]+$/>","target":"/index.html","status":"200"}]'`. _R13.7, design §12.2_
 - [x] 1.4 `backend/template.yaml` (pode começar em paralelo com a 1.2, porque só usa parâmetros). `sam validate --lint`. _design §1, §3, §8, §12.2; R13.1, R13.3, R13.4, R13.5, R13.8_
@@ -93,7 +93,7 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
 - [x] 1.6 Variáveis do frontend (logo após a M3). _R13.7, design §7, §12.3_
   - [x] `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOMAIN`, `VITE_API_URL` e `VITE_REDIRECT_URI=http://localhost:5173/` no `.env` da raiz (lido pelo Vite em dev).
   - [x] As mesmas na branch `main` do Amplify (`aws amplify update-branch --environment-variables`), com `VITE_REDIRECT_URI=https://main.d3vro5b84ccm5j.amplifyapp.com/`.
-- [ ] 1.7 `scripts/seed.py` e execução (0:50–1:15). Tem alocação própria (sobreposição com margem e hierarquia de ambientes), para não esperar a Frente 2; grava as chaves do `design.md` §3 (inclusive `OCUP#…` e `AGENDA`). Lê `TABLE_NAME` e `COGNITO_USER_POOL_ID` do `.env`. Precisa rodar **antes** do redeploy (1.8), enquanto a `notificacoes` ainda é o stub. Precisa das contas de demo (1.2). _R11; 1.2, 1.5_
+- [x] 1.7 `scripts/seed.py` e execução (0:50–1:15). Tem alocação própria (sobreposição com margem e hierarquia de ambientes), para não esperar a Frente 2; grava as chaves do `design.md` §3 (inclusive `OCUP#…` e `AGENDA`). Lê `TABLE_NAME` e `COGNITO_USER_POOL_ID` do `.env`. Precisa rodar **antes** do redeploy (1.8), enquanto a `notificacoes` ainda é o stub. Precisa das contas de demo (1.2). _R11; 1.2, 1.5_
   - [x] Catálogo, vínculos com `setores[]`/`ambientesVinculados[]` pré-computados, `codigoServicoSnp` (R11.4), config e contadores (`CTR#RESE` = 17326).
   - [x] Números com ponto → inteiros; datas → ISO −03:00 (R11.1).
   - [x] Recursos de `dados-solicitacao.csv` (R11.2).
@@ -101,7 +101,7 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] Históricas com ambiente compatível com a RN9 e sem conflito com a RN5/RN6, sem aplicar RN3/RN4; RN8 conferida contra o cenário; fallback "local próprio" com complemento (R11.3).
   - [x] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
   - [x] `--dry-run` confere sem gravar: 90 itens de catálogo, 9 reservas do cenário + 192 do CSV (189 com ambiente, 12 em local próprio), 815 itens de reserva.
-  - [ ] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada.
+  - [x] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada. 907 itens (92 de catálogo/contadores + 815 de reservas: 201 META, 208 PER, 196 OCUP#AMBI, 210 OCUP#RECU); reexecução: 0 gravados.
 - [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
   - [ ] O redeploy sem mudança no template não cria recursos novos (só atualiza código).
   - [ ] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
