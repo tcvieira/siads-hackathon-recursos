@@ -25,6 +25,7 @@ class CodigoErro(StrEnum):
     RECURSO_ESGOTADO = "RECURSO_ESGOTADO"
     RESERVA_ENCERRADA = "RESERVA_ENCERRADA"
     CANCELAMENTO_SEM_ANTECEDENCIA = "CANCELAMENTO_SEM_ANTECEDENCIA"
+    CONFLITO_CONCORRENTE = "CONFLITO_CONCORRENTE"
 
 
 @dataclass
@@ -236,7 +237,7 @@ class Alteracao:
 
 @dataclass
 class EmailSimulado:
-    """RESE#<id> / EMAIL#<ts>#<setor>. O frontend mostra os campos, nunca o `html`."""
+    """RESE#<id> / EMAIL#<ts>#<setor>#<eventID>. O frontend mostra os campos, nunca o `html`."""
 
     reservaId: str
     ts: str

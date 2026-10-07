@@ -25,7 +25,8 @@ from dominio.modelos import CodigoErro, Erro, Periodo, Reserva, ReservaEntrada
 from dominio.notificacao import setores_envolvidos
 from dominio.tempo import para_datetime, para_iso
 
-MENSAGEM_CONCORRENCIA = "Outra reserva foi gravada ao mesmo tempo; tente novamente."
+MENSAGEM_CONCORRENCIA = ("Outra gravação mudou a agenda ou esta reserva ao mesmo tempo; "
+                         "tente novamente.")
 
 
 def _com_status(reserva: Reserva, agora: datetime) -> Reserva:
@@ -130,7 +131,8 @@ def _gravar(entrada: ReservaEntrada, cad: Cadastros, repo: Repositorio, agora: d
             return _com_status(repo.salvar_reserva(nova, antiga, versoes, cad), agora)
         except ConflitoConcorrente:
             if tentativa:
-                raise conflito([Erro("periodos", CodigoErro.CONFLITO_AMBIENTE,
+                # Sem sobreposição na revalidação: a falha é de concorrência, não de ambiente.
+                raise conflito([Erro("periodos", CodigoErro.CONFLITO_CONCORRENTE,
                                      MENSAGEM_CONCORRENCIA)]) from None
     raise AssertionError("inalcançável")
 
@@ -168,5 +170,5 @@ def cancelar(reserva: Reserva, cad: Cadastros, repo: Repositorio, agora: datetim
     try:
         return _com_status(repo.cancelar_reserva(reserva, cad), agora)
     except ConflitoConcorrente:
-        raise conflito([Erro("reserva", CodigoErro.CONFLITO_AMBIENTE,
+        raise conflito([Erro("reserva", CodigoErro.CONFLITO_CONCORRENTE,
                              "A reserva foi alterada ao mesmo tempo; tente novamente.")]) from None

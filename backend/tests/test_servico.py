@@ -143,7 +143,7 @@ def test_rn7_corrida_repetida_desiste_com_409(cad, repo):
     with pytest.raises(ErroApi) as erro:
         criar(cad, repo, entrada(), antes_de_salvar=concorrente)
     assert erro.value.status == 409
-    assert erro.value.erros[0].codigo == CodigoErro.CONFLITO_AMBIENTE
+    assert erro.value.erros[0].codigo == CodigoErro.CONFLITO_CONCORRENTE
     assert erro.value.erros[0].mensagem == servico.MENSAGEM_CONCORRENCIA
 
 
@@ -186,6 +186,16 @@ def test_cancelar_libera_ocupacao_e_sem_antecedencia_409(cad, repo):
     cancelada = servico.cancelar(r, cad, repo, AGORA)
     assert cancelada.cancelada and cancelada.status == "cancelada"
     assert repo.ocupacoes_ambiente("3", "2027") == [] and repo.ocupacoes_recurso("6", "2027") == []
+
+
+def test_cancelar_versao_desatualizada_409_concorrente(cad, repo):
+    """Cancelar com a versão antiga depois de uma alteração: 409 de concorrência, não de ambiente."""
+    antiga = criar(cad, repo, entrada())
+    servico.alterar(antiga, entrada(periodos=[p("14:30", "16:30")]), SOLICITANTE, cad, repo, AGORA)
+    with pytest.raises(ErroApi) as erro:
+        servico.cancelar(antiga, cad, repo, AGORA)
+    assert erro.value.status == 409
+    assert codigos(erro.value) == [CodigoErro.CONFLITO_CONCORRENTE]
 
 
 def test_validar_junta_erros_sem_gravar(cad, repo):

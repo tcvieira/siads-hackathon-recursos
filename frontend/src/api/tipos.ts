@@ -19,6 +19,7 @@ export const CODIGOS_ERRO = [
   'RECURSO_ESGOTADO',
   'RESERVA_ENCERRADA',
   'CANCELAMENTO_SEM_ANTECEDENCIA',
+  'CONFLITO_CONCORRENTE',
 ] as const
 
 export type CodigoErro = (typeof CODIGOS_ERRO)[number]
@@ -191,7 +192,7 @@ export interface Alteracao {
   depois: string
 }
 
-/** RESE#<id> / EMAIL#<ts>#<setor>. O frontend mostra os campos, nunca o `html`. */
+/** RESE#<id> / EMAIL#<ts>#<setor>#<eventID>. O frontend mostra os campos, nunca o `html`. */
 export interface EmailSimulado {
   reservaId: string
   ts: string
