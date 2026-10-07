@@ -103,7 +103,8 @@ def _para(cls, item: Mapping[str, Any]):
 
 
 def _reserva(item: Mapping[str, Any]) -> Reserva:
-    r = _para(Reserva, item)
+    # Local próprio: o META não grava `ambienteId` (atributos None ficam de fora, como no seed).
+    r = _para(Reserva, {"ambienteId": None, **item})
     r.periodos = [Periodo(inicio=p["inicio"], termino=p["termino"]) for p in r.periodos]
     r.recursos = [ItemRecurso(recursoId=str(i["recursoId"]), qtd=int(i["qtd"])) for i in r.recursos]
     r.status = None  # calculado (RN13), nunca gravado

@@ -154,6 +154,9 @@ def test_local_proprio_sem_ocup_ambiente(repo, tabela, cad):
     meta = tabela.get_item(Key={"PK": "RESE#9001", "SK": "META"})["Item"]
     assert "ambienteId" not in meta and meta["complemento"] == "Sala da unidade"
     assert not [i for i in todos(tabela) if i["PK"].startswith("OCUP#")]
+    # META sem `ambienteId` (como o seed grava) volta como local próprio.
+    assert repo.obter_reserva("9001").ambienteId is None
+    assert repo.obter_metas(["9001"])[0].ambienteId is None
 
 
 def test_obter_reserva_no_formato_do_seed(repo, tabela):
