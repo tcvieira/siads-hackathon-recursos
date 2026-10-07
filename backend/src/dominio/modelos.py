@@ -39,6 +39,13 @@ class Erro:
 
 
 @dataclass
+class RespostaErro:
+    """Corpo das respostas 400 e 409 de POST/PUT /reservas e DELETE /reservas/{id}."""
+
+    erros: list[Erro]
+
+
+@dataclass
 class ResultadoValidacao:
     """Resposta de POST /reservas/validar."""
 

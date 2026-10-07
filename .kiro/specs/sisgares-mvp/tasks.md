@@ -120,7 +120,7 @@ pytest a cada gravação, cada função nasce com o seu teste.
 - [ ] 2.5 `tests/`: um teste nomeado por exemplo da seção 6 do caso, de RN1 a RN13 (inclusive RN9 "kit da Sala 1 não aparece na Sala 2", RN10 copa/TI e RN11 com/sem código), mais o diff e o caso "MODIFY sem diferença". `pytest -q` verde. _R12_
 - [ ] 2.6 `comum/auth.py`: `Usuario.from_claims` (parse de `"[a b]"`), `autorizar`, `mascarar_para`, log de decisão sem e-mail. `tests/test_auth.py`. _R1, R8.3, R9_
 - [ ] 2.7 `comum/repo.py` (`design.md` §3): leitura do catálogo; leitura dos locks **antes** das consultas; ocupações em `OCUP#…` com `ConsistentRead=true`; `salvar_reserva` em `TransactWriteItems` com locks e retry único; `cancelar_reserva` (META + `PER#` + Delete dos `OCUP#`); listagens no GSI1 (`SOLI#`, `AGENDA`, `NOTIF`); contadores. _R3.4, R4, R5.3_
-- [ ] 2.8 `comum/http.py` + `handlers/catalogo.py` e `handlers/reservas.py` (Powertools `APIGatewayHttpResolver`, Pydantic com datas convertidas para −03:00 e limites de 5 períodos / 10 recursos, erros → 400/403/404/409 com `erros[]`). _R2–R5_
+- [ ] 2.8 `comum/http.py` + `handlers/catalogo.py` e `handlers/reservas.py` (Powertools `APIGatewayHttpResolver`, Pydantic com datas convertidas para −03:00 e limites de 5 períodos / 10 recursos, erros 400/409 no formato `RespostaErro` (`{erros: Erro[]}`); 403 e 404 só com `{mensagem}` genérica, sem detalhar a política (R9.3)). _R2–R5, R9.3_
 - [ ] 2.9 `handlers/paineis.py`: ocupação do ambiente (com hierarquia, sem dados da reserva), atendimento (GSI1 `AGENDA` + filtro por setor + `BatchGetItem` + máscara + pedidos SNP), notificações. _R7, R8_
 - [ ] 2.10 `handlers/notificacoes.py`: consumo do stream → `EMAIL#…` e upsert `SNP#…` (`design.md` §6), idempotente por `eventID`, ignorando `MODIFY` sem diferença. _R6_
 - [ ] 2.11 `pytest -q` verde, commit e aviso à Frente 1 para o redeploy (**M4**).
@@ -137,7 +137,7 @@ completa só com teclado, axe sem violações A/AA e reflow em 320px (steering d
   - [ ] Plugin `jsx-a11y` no `frontend/.oxlintrc.json`; `lang="pt-BR"` no `index.html`; tokens de cor com contraste conferido.
   - [ ] `envDir: '..'` no `vite.config.ts` (lê o `.env` da raiz, `design.md` §7).
   - [ ] Copiar `docs/requisitos/Imagens/icones-*` para `frontend/public/icones/`.
-- [ ] 3.2 Mocks de API com MSW a partir de `api/tipos.ts` e das rotas do `design.md` §4, incluindo respostas 409 de RN5/RN6/RN8, para desenvolver as telas sem backend. Ligados por `VITE_USE_MOCKS=1`.
+- [ ] 3.2 Mocks de API com MSW a partir de `api/tipos.ts` e das rotas do `design.md` §4, incluindo respostas 409 de RN5/RN6/RN8 no formato `RespostaErro`, para desenvolver as telas sem backend. Ligados por `VITE_USE_MOCKS=1`.
 - [ ] 3.3 Auth: `react-oidc-context` com PKCE, `api/cliente.ts` com o ID token, guarda de rota por grupo, layout (skip link, header/nav/main, título + foco no `<h1>` por rota), menu por papel (R1.4), logout. Até a **M1**, usar um usuário simulado nos mocks. _R1_
 - [ ] 3.4 `/reservas/nova` e `/reservas/:id/editar`: formulário completo (`design.md` §7), recursos filtrados pelo ambiente (RN9), validação ao vivo em `aria-live` e resumo de erros com `role="alert"`. _R2, R3.3, R3.6, R4.3_
 - [ ] 3.5 `/minhas-reservas` com status em texto + badge, Editar e Cancelar (AlertDialog). _R5_

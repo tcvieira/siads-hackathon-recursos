@@ -76,7 +76,7 @@ instala as dependências do `requirements.txt` que estiver no `CodeUri`.
 | Setor | `CAT#ENVO` | `<id>` | | desc, email, ativo |
 | Vínculo setor | `CAT#VINC` | `AMBI#<id>#ENVO#<id>` ou `RECU#<id>#ENVO#<id>` | | codigoServicoSnp? |
 | Config | `CAT#CONF` | `GLOBAL` | | faixaInicio, faixaFim, antecedenciaMin, margemMin |
-| Reserva | `RESE#<id>` | `META` | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[], recursos[{id,qtd}], solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
+| Reserva | `RESE#<id>` | `META` | `SOLI#<sub>` / `<criadoEm>` | finalidade, participantes, ambienteId?, complemento?, disposicaoId?, periodos[], recursos[{recursoId,qtd}], solicitanteSub, solicitanteEmail, setoresIds[], cancelada, versao |
 | Agenda do período | `RESE#<id>` | `PER#<n>` | `AGENDA` / `<inicio>#<id>` | inicio, termino, cancelada, ambienteId, setoresIds[] |
 | Ocupação de ambiente | `OCUP#AMBI#<a>` | `<inicio>#<id>#<n>` | | termino, reservaId |
 | Ocupação de recurso limitado | `OCUP#RECU#<r>` | `<inicio>#<id>#<n>` | | termino, reservaId, qtd |
@@ -116,7 +116,7 @@ gravação recém-confirmada poderia não aparecer na checagem seguinte e duas r
 | GET `/catalogo` | catalogo | todos | Ambientes, disposições, grupos, recursos (com vínculos e limitado), config. Sem e-mail de setor. |
 | GET `/ambientes/{id}/ocupacao?de&ate` | paineis | todos | Períodos ocupados do ambiente + ancestrais + descendentes (sem dados da reserva). |
 | POST `/reservas/validar` | reservas | solicitante, admin | Dry-run de R2–R4. Retorna `{ok, erros[{campo, periodoIndex?, codigo, mensagem, sugestao?}]}`. |
-| POST `/reservas` | reservas | solicitante, admin | Cria. 201 ou 400/409 com `erros[]`. |
+| POST `/reservas` | reservas | solicitante, admin | Cria. 201 ou 400/409 com `RespostaErro` (`{erros: Erro[]}`). |
 | GET `/reservas?minhas=1` | reservas | solicitante, admin | Reservas do usuário (GSI1 `SOLI#sub`), com status. |
 | GET `/reservas/{id}` | reservas | dono, admin, atendente do setor | Detalhe (mascarado para o atendente). |
 | PUT `/reservas/{id}` | reservas | dono, admin | Altera (R5.1). |
@@ -127,6 +127,8 @@ gravação recém-confirmada poderia não aparecer na checagem seguinte e duas r
 Corpo da reserva:
 `{finalidade, participantes, ambienteId|null, complemento?, disposicaoId?, periodos:[{inicio, termino}], recursos:[{recursoId, qtd}]}`.
 Validação com Pydantic: tamanhos máximos, inteiros positivos, ISO com offset (convertido para −03:00), no máximo 5 períodos e 10 recursos, dos quais até 5 limitados (limite do `TransactWriteItems`, §3).
+
+Erros 400/409 sempre no formato `RespostaErro` (`{erros: Erro[]}`); 403 e 404 levam só `{mensagem}` genérica (R9.3).
 
 Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAIXA`, `SEM_ANTECEDENCIA`, `RECURSO_INDISPONIVEL_AMBIENTE`, `CONFLITO_AMBIENTE`, `RECURSO_ESGOTADO`, `RESERVA_ENCERRADA`, `CANCELAMENTO_SEM_ANTECEDENCIA`.
 

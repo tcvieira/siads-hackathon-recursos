@@ -34,13 +34,15 @@ def test_modelos_instanciaveis():
         recursos=[modelos.ItemRecurso(recursoId="6", qtd=1)],
         solicitanteSub="sub",
         solicitanteEmail="solicitante@example.com",
-        setoresIds=["SMSG"],
+        setoresIds=["1"],  # ENVO_ID (1 = SMSG), não a sigla
         cancelada=False,
         versao=1,
         criadoEm="2026-05-01T10:00:00-03:00",
     )
     assert reserva.status is None
     assert modelos.ResultadoValidacao(ok=True).erros == []
+    erro = modelos.Erro(campo="periodos", codigo=modelos.CodigoErro.CONFLITO_AMBIENTE, mensagem="x")
+    assert modelos.RespostaErro(erros=[erro]).erros[0].codigo == "CONFLITO_AMBIENTE"
 
 
 def test_dominio_sem_boto3():

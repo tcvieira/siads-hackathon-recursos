@@ -32,6 +32,11 @@ export interface Erro {
   sugestao?: string | null
 }
 
+/** Corpo das respostas 400 e 409 de POST/PUT /reservas e DELETE /reservas/{id}. */
+export interface RespostaErro {
+  erros: Erro[]
+}
+
 /** Resposta de POST /reservas/validar. */
 export interface ResultadoValidacao {
   ok: boolean
