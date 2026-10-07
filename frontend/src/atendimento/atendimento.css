@@ -1,0 +1,77 @@
+.atend-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin: 1rem 0;
+}
+.atend-controles .campo {
+  margin-bottom: 0;
+}
+
+.atend-dia {
+  margin-bottom: 1.5rem;
+}
+.atend-dia__titulo {
+  font-size: 1.1rem;
+  border-bottom: 2px solid var(--cor-borda);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.75rem;
+  text-transform: capitalize;
+}
+.atend-dia__vazio {
+  color: var(--cor-texto-suave);
+  font-style: italic;
+}
+
+.atend-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.card-atend {
+  border: 1px solid var(--cor-borda);
+  border-left: 4px solid var(--cor-primaria);
+  border-radius: var(--raio);
+  padding: 0.75rem 1rem;
+}
+.card-atend__topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.card-atend__horario {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.card-atend__titulo {
+  margin: 0.25rem 0;
+  font-size: 1rem;
+}
+.card-atend__dados {
+  margin: 0.5rem 0 0;
+}
+.card-atend__dados dt {
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+}
+.card-atend__dados dd {
+  margin: 0 0 0.5rem;
+}
+.card-atend__recursos {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.card-atend__snp a {
+  font-variant-numeric: tabular-nums;
+}
+.card-atend__acoes {
+  margin-top: 0.5rem;
+}

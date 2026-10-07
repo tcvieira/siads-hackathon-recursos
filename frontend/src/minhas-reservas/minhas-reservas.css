@@ -25,32 +25,6 @@
   font-size: 1.1rem;
 }
 
-/* Badge de status: cor de fundo + TEXTO (o texto é o rótulo; cor é reforço). */
-.badge {
-  display: inline-block;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border: 1px solid currentColor;
-}
-.badge--prevista {
-  color: #0b3d91;
-  background: #e9f2ff;
-}
-.badge--em_andamento {
-  color: #1b5e20;
-  background: #e6f4ea;
-}
-.badge--transcorrida {
-  color: #41465b;
-  background: #eceef2;
-}
-.badge--cancelada {
-  color: #7a0016;
-  background: #fdecea;
-}
-
 .cartao-reserva__dados {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));

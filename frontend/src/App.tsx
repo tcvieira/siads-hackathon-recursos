@@ -3,6 +3,7 @@ import type { Reserva, ReservaEntrada } from './api/tipos'
 import { Grade } from './grade/Grade'
 import { FormularioReserva } from './reserva/FormularioReserva'
 import { MinhasReservas } from './minhas-reservas/MinhasReservas'
+import { PainelAtendimento } from './atendimento/PainelAtendimento'
 import './App.css'
 
 /**
@@ -18,6 +19,7 @@ import './App.css'
 type Tela =
   | { nome: 'grade' }
   | { nome: 'minhas' }
+  | { nome: 'atendimento' }
   | { nome: 'formulario'; inicial: Partial<ReservaEntrada> }
 
 /** Converte Date local para o valor de <input type="datetime-local"> (YYYY-MM-DDTHH:MM). */
@@ -49,6 +51,7 @@ interface ItemMenu {
 const MENU: ItemMenu[] = [
   { nome: 'grade', rotulo: 'Grade de horários' },
   { nome: 'minhas', rotulo: 'Minhas reservas' },
+  { nome: 'atendimento', rotulo: 'Atendimento' },
   { nome: 'formulario', rotulo: 'Nova reserva' },
 ]
 
@@ -68,8 +71,9 @@ function App() {
 
   function irPara(nome: Tela['nome']) {
     if (nome === 'formulario') setTela({ nome: 'formulario', inicial: {} })
-    else if (nome === 'grade') setTela({ nome: 'grade' })
-    else setTela({ nome: 'minhas' })
+    else if (nome === 'minhas') setTela({ nome: 'minhas' })
+    else if (nome === 'atendimento') setTela({ nome: 'atendimento' })
+    else setTela({ nome: 'grade' })
   }
 
   return (
@@ -109,6 +113,9 @@ function App() {
           <MinhasReservas
             onEditar={(r) => setTela({ nome: 'formulario', inicial: reservaParaEntrada(r) })}
           />
+        )}
+        {tela.nome === 'atendimento' && (
+          <PainelAtendimento onAbrirReserva={() => setTela({ nome: 'formulario', inicial: {} })} />
         )}
         {tela.nome === 'formulario' && (
           <FormularioReserva inicial={tela.inicial} onSalvar={() => setTela({ nome: 'minhas' })} />
