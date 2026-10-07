@@ -1,11 +1,7 @@
 """Fumaça da Fase 0: contratos importáveis e handlers stub respondendo."""
 
-import json
-
-import pytest
-
 from dominio import modelos
-from handlers import notificacoes, paineis
+from handlers import notificacoes
 
 CODIGOS_DESIGN = {
     "PERIODO_INVALIDO",
@@ -49,13 +45,6 @@ def test_dominio_sem_boto3():
     fonte = open(modelos.__file__, encoding="utf-8").read()
     assert "boto3" not in fonte.replace("sem boto3", "")
     assert "pydantic" not in fonte.lower().replace("sem pydantic", "")
-
-
-@pytest.mark.parametrize("modulo", [paineis])
-def test_handlers_http_stub_501(modulo):
-    resposta = modulo.handler({}, None)
-    assert resposta["statusCode"] == 501
-    assert isinstance(json.loads(resposta["body"]), dict)
 
 
 def test_handler_stream_stub_sem_erro():
