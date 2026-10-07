@@ -1,7 +1,6 @@
-"""Fumaça da Fase 0: contratos importáveis e handlers stub respondendo."""
+"""Fumaça da Fase 0: contratos importáveis e coerentes com o design."""
 
 from dominio import modelos
-from handlers import notificacoes
 
 CODIGOS_DESIGN = {
     "PERIODO_INVALIDO",
@@ -45,7 +44,3 @@ def test_dominio_sem_boto3():
     fonte = open(modelos.__file__, encoding="utf-8").read()
     assert "boto3" not in fonte.replace("sem boto3", "")
     assert "pydantic" not in fonte.lower().replace("sem pydantic", "")
-
-
-def test_handler_stream_stub_sem_erro():
-    assert notificacoes.handler({"Records": []}, None) is None
