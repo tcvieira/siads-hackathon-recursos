@@ -52,19 +52,23 @@ const horas = (h: number) => `${formatoHoras.format(h)} h`
 const sigla = (dia: string) => SIGLAS[new Date(`${dia}T12:00:00Z`).getUTCDay()]
 
 const cartao = 'rounded-md bg-card p-3 shadow-sm sm:p-4'
+/** Ambiente exibido na grade: fundo + barra azul à esquerda (além do texto "Exibindo na grade"). */
+const destaque = 'bg-accent! shadow-[inset_4px_0_0_var(--link)]'
 
-/** Visão geral da semana enquanto nenhum ambiente foi escolhido na grade (/grade2). */
+/** Visão geral da semana; cada ambiente é um link que troca a grade exibida abaixo (`atual` fica destacado). */
 export function PainelOcupacao({
   ambientes,
   config,
   semana,
   agora,
+  atual,
   hrefAmbiente,
 }: {
   ambientes: Ambiente[]
   config: Config
   semana: string
   agora: number
+  atual: string | null
   hrefAmbiente: (id: string) => string
 }) {
   const id = useId()
@@ -132,8 +136,7 @@ export function PainelOcupacao({
           Ocupação da semana
         </h2>
         <p className="text-sm text-muted-foreground">
-          Horas reservadas diretamente em cada ambiente, nos dias úteis, {config.faixaInicio}–{config.faixaFim}. Escolha um ambiente
-          para abrir a grade.
+          Horas reservadas diretamente em cada ambiente, nos dias úteis, {config.faixaInicio}–{config.faixaFim}.
         </p>
       </div>
 
@@ -237,15 +240,18 @@ export function PainelOcupacao({
             </thead>
             <tbody>
               {linhas.map((l) => (
-                <tr key={l.ambiente.id} className="border-t">
+                <tr key={l.ambiente.id} className={cn('border-t', l.ambiente.id === atual && destaque)}>
                   <th scope="row" className="px-3 py-2 text-left font-normal">
                     <Link
                       to={hrefAmbiente(l.ambiente.id)}
+                      state={{ focarGrade: true }}
+                      aria-current={l.ambiente.id === atual || undefined}
                       className="inline-flex items-start gap-1.5 font-medium break-words text-link underline-offset-2 hover:underline"
                     >
                       <CalendarDays aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                       {l.ambiente.desc}
                     </Link>
+                    {l.ambiente.id === atual && <span className="block text-xs font-semibold text-primary">Exibindo na grade</span>}
                     {agoraValido && !l.indisponivel && <span className="block text-xs text-muted-foreground">{status(l)}</span>}
                   </th>
                   {l.indisponivel ? (
@@ -286,12 +292,15 @@ export function PainelOcupacao({
             <li key={l.ambiente.id}>
               <Link
                 to={hrefAmbiente(l.ambiente.id)}
-                className="flex min-h-11 flex-col justify-center gap-0.5 px-4 py-2.5 hover:bg-accent"
+                state={{ focarGrade: true }}
+                aria-current={l.ambiente.id === atual || undefined}
+                className={cn('flex min-h-11 flex-col justify-center gap-0.5 px-4 py-2.5 hover:bg-accent', l.ambiente.id === atual && destaque)}
               >
                 <span className="inline-flex items-start gap-1.5 font-medium break-words text-link">
                   <CalendarDays aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                   {l.ambiente.desc}
                 </span>
+                {l.ambiente.id === atual && <span className="text-xs font-semibold text-primary">Exibindo na grade</span>}
                 <span className="text-sm text-muted-foreground tabular-nums">
                   {l.indisponivel
                     ? 'Indisponível no momento'

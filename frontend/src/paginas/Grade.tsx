@@ -1,19 +1,23 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { ArrowLeft, Ban, CalendarPlus, Check, ChevronLeft, ChevronRight, ChevronsUpDown, History, Hourglass, Lock } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Ban, CalendarPlus, Check, ChevronLeft, ChevronRight, ChevronsUpDown, History, Hourglass, Lock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useCatalogo, useOcupacao } from '@/api/consultas'
 import type { Config, PeriodoOcupado } from '@/api/tipos'
 import { PainelOcupacao } from '@/componentes/PainelOcupacao'
 import { TituloPagina } from '@/componentes/TituloPagina'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
+  diaDe,
   diasDaSemana,
   formatarData,
   formatarDiaSemana,
+  formatarHora,
   hoje,
   inicioDaSemana,
   inicioDoDia,
@@ -25,12 +29,23 @@ import type { Slot } from '@/lib/datas'
 import { cn } from '@/lib/utils'
 
 type Estado = 'livre' | 'ocupado' | 'margem' | 'ultrapassado' | 'antecedencia'
+/** Trecho contínuo de slots do mesmo dia no mesmo estado (vira uma célula com rowSpan). */
+type Segmento = { estado: Estado; ini: number; tam: number }
 
-const ESTADOS: Record<Exclude<Estado, 'livre'>, { texto: string; Icone: LucideIcon; classe: string }> = {
-  ocupado: { texto: 'Ocupado', Icone: Lock, classe: 'bg-muted text-foreground' },
-  margem: { texto: 'Margem de tolerância', Icone: Hourglass, classe: 'bg-aviso-fundo text-aviso' },
-  ultrapassado: { texto: 'Horário ultrapassado', Icone: History, classe: 'text-muted-foreground' },
-  antecedencia: { texto: 'Sem antecedência mínima', Icone: Ban, classe: 'text-muted-foreground' },
+const ESTADOS: Record<Exclude<Estado, 'livre'>, { texto: ReactNode; Icone: LucideIcon; classe: string }> = {
+  // primary-foreground sobre primary: 11,1:1.
+  ocupado: { texto: 'Ocupado', Icone: Lock, classe: 'bg-primary text-primary-foreground' },
+  margem: {
+    texto: (
+      <>
+        Margem<span className="sr-only"> de tolerância</span>
+      </>
+    ),
+    Icone: Hourglass,
+    classe: 'bg-[repeating-linear-gradient(135deg,var(--aviso-fundo)_0_6px,var(--card)_6px_12px)] text-aviso',
+  },
+  ultrapassado: { texto: 'Horário encerrado', Icone: History, classe: 'bg-muted text-muted-foreground' },
+  antecedencia: { texto: 'Sem antecedência mínima', Icone: Ban, classe: 'bg-card text-muted-foreground' },
 }
 
 /** Estado do slot (R7.2). Ocupação já inclui ancestrais e descendentes (RN6). */
@@ -43,60 +58,99 @@ function estadoDoSlot(slot: Slot, ocupados: PeriodoOcupado[], config: Config, ag
   return 'livre'
 }
 
-/** Conteúdo da célula/item: texto + ícone, ou botão "Reservar às HH:MM de dd/mm" (nome acessível completo). */
-function Celula({ estado, slot, dia, aoReservar }: { estado: Estado; slot: Slot; dia: string; aoReservar: () => void }) {
-  if (estado === 'livre') {
-    return (
-      <Button
-        variant="outline"
-        className="h-11 w-full justify-start border-sucesso text-sucesso sm:h-8"
-        onClick={aoReservar}
-      >
-        <CalendarPlus aria-hidden="true" />
-        Reservar<span className="sr-only"> às {slot.rotulo} de {formatarData(dia)}</span>
-      </Button>
-    )
+/** Junta slots consecutivos no mesmo estado; cada slot livre segue sozinho (um botão por horário). */
+function segmentar(estados: Estado[]): Segmento[] {
+  const segs: Segmento[] = []
+  estados.forEach((estado, ini) => {
+    const ultimo = segs.at(-1)
+    if (ultimo && estado !== 'livre' && ultimo.estado === estado) ultimo.tam++
+    else segs.push({ estado, ini, tam: 1 })
+  })
+  return segs
+}
+
+/**
+ * Classe e conteúdo da célula (td da tabela ou item da lista). Livre: botão discreto "Livre" que, em
+ * hover/foco (e sempre no mobile), mostra "Reservar HH:MM"; o nome acessível é "Reservar às HH:MM de dd/mm".
+ */
+function celula(seg: Segmento, slots: Slot[], dia: string, aoReservar: (slot: Slot) => void) {
+  if (seg.estado === 'livre') {
+    const slot = slots[seg.ini]
+    const mostrar = 'sm:group-hover/button:not-sr-only sm:group-focus-visible/button:not-sr-only'
+    return {
+      classe: 'rounded-sm border border-border bg-card p-0.5',
+      conteudo: (
+        <Button
+          variant="ghost"
+          className="h-11 w-full justify-start px-2 font-normal text-link hover:bg-accent hover:text-link sm:h-7"
+          onClick={() => aoReservar(slot)}
+        >
+          <CalendarPlus aria-hidden="true" className="sm:hidden sm:group-hover/button:block sm:group-focus-visible/button:block" />
+          <span className={cn('sm:sr-only', mostrar)}>
+            Reservar<span className="sr-only"> às</span> {slot.rotulo}
+            <span className="sr-only"> de {formatarData(dia)}</span>
+          </span>
+          <span className="hidden sm:inline sm:group-hover/button:sr-only sm:group-focus-visible/button:sr-only">
+            <span className="sr-only">, </span>Livre
+          </span>
+        </Button>
+      ),
+    }
   }
-  const { texto, Icone, classe } = ESTADOS[estado]
-  return (
-    <span className={cn('flex min-h-8 items-center gap-1.5 rounded-md px-2 text-sm', classe)}>
-      <Icone aria-hidden="true" className="size-4 shrink-0" />
-      {texto}
-    </span>
-  )
+  const { texto, Icone, classe } = ESTADOS[seg.estado]
+  const diaTodo = seg.estado === 'ultrapassado' && seg.tam === slots.length
+  const faixa = `${slots[seg.ini].rotulo}–${formatarHora(slots[seg.ini + seg.tam - 1].termino)}`
+  return {
+    classe: cn('px-2 py-1 align-top text-sm', classe),
+    conteudo: (
+      <>
+        <span className="flex items-center gap-1.5 font-medium">
+          <Icone aria-hidden="true" className="size-4 shrink-0" />
+          {diaTodo ? 'Dia encerrado' : texto}
+        </span>
+        {!diaTodo && (seg.estado === 'ocupado' || seg.tam > 1) && <span className="block text-xs tabular-nums">{faixa}</span>}
+      </>
+    ),
+  }
 }
 
 export default function Grade() {
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [params, setParams] = useSearchParams()
   const [agora, setAgora] = useState(Date.now)
-  // Reavalia "Horário ultrapassado" e "Sem antecedência mínima" com a tela aberta.
+  // Reavalia "Horário encerrado" e "Sem antecedência mínima" com a tela aberta.
   useEffect(() => {
     const t = setInterval(() => setAgora(Date.now()), 60_000)
     return () => clearInterval(t)
   }, [])
   const [aberto, setAberto] = useState(false)
   const idBase = useId()
+  const tituloGrade = useRef<HTMLHeadingElement>(null)
 
   const dia = params.get('dia') ?? hoje()
+  const fds = params.get('fds') === '1'
   const semana = inicioDaSemana(dia)
-  const dias = diasDaSemana(semana)
+  const dias = diasDaSemana(semana, fds ? 7 : 5)
+  // Sem fim de semana, um ?dia= de sábado/domingo cai na segunda da lista diária.
+  const diaLista = dias.includes(dia) ? dia : dias[0]
+  const hojeLocal = diaDe(agora)
 
   const catalogo = useCatalogo()
   const ambientes = (catalogo.data?.ambientes ?? []).filter((a) => a.ativo)
   // Sem ambiente na URL, abre no primeiro ativo para a tela não começar vazia.
-  const escolhido = params.get('ambiente')
-  const ambienteId = escolhido ?? ambientes[0]?.id ?? null
+  const ambienteId = params.get('ambiente') ?? ambientes[0]?.id ?? null
   const ocupacao = useOcupacao(ambienteId, inicioDoDia(semana), inicioDoDia(somarDias(semana, 7)))
 
   const ambiente = ambientes.find((a) => a.id === ambienteId)
   const config = catalogo.data?.config
 
-  const mudar = (chave: string, valor: string) =>
+  const mudar = (chave: string, valor: string | null) =>
     setParams(
       (p) => {
         const novo = new URLSearchParams(p)
-        novo.set(chave, valor)
+        if (valor === null) novo.delete(chave)
+        else novo.set(chave, valor)
         return novo
       },
       { replace: true },
@@ -106,10 +160,28 @@ export default function Grade() {
     navigate(`/reservas/nova?${new URLSearchParams({ ambienteId: ambienteId!, inicio: slot.inicio })}`)
 
   const faixa = (d: string) => slotsDoDia(d, config?.faixaInicio, config?.faixaFim)
-  const rotuloSemana = `Semana de ${formatarData(dias[0])} a ${formatarData(dias[6])}`
-  const ids = { rotulo: `${idBase}-rotulo`, combo: `${idBase}-ambiente`, lista: `${idBase}-lista`, dia: `${idBase}-dia` }
+  const pronto = config && ocupacao.data ? { config, ocupados: ocupacao.data } : null
+  const segmentos = (d: string) => {
+    const slots = faixa(d)
+    return { slots, segs: pronto ? segmentar(slots.map((s) => estadoDoSlot(s, pronto.ocupados, pronto.config, agora))) : [] }
+  }
+  // Tabela: uma célula só no início de cada segmento (com rowSpan); as linhas cobertas pulam o dia.
+  const colunas = dias.map((d) => {
+    const { slots, segs } = segmentos(d)
+    return { d, slots, porInicio: new Map(segs.map((s) => [s.ini, s])) }
+  })
+  const lista = segmentos(diaLista)
+  const rotuloSemana = `Semana de ${formatarData(dias[0])} a ${formatarData(dias[dias.length - 1])}`
+  const ids = {
+    rotulo: `${idBase}-rotulo`,
+    combo: `${idBase}-ambiente`,
+    lista: `${idBase}-lista`,
+    dia: `${idBase}-dia`,
+    fds: `${idBase}-fds`,
+    titulo: `${idBase}-titulo`,
+  }
 
-  // Link `?dia=<semana>&ambiente=<id>` (preserva outros params; sem replace, o Voltar retorna ao painel).
+  // Link `?dia=<semana>&ambiente=<id>` do painel (preserva outros params; sem replace, o Voltar volta ao ambiente anterior).
   const hrefAmbiente = (id: string) => {
     const novo = new URLSearchParams(params)
     novo.set('dia', semana)
@@ -117,18 +189,28 @@ export default function Grade() {
     return `?${novo}`
   }
 
-  // Ao escolher um ambiente pelo painel, leva o foco para o combobox (o Layout só foca o h1 ao mudar de rota).
-  const ultimoEscolhido = useRef(escolhido)
+  // Ambiente escolhido no painel: foco no título da grade (o Layout só foca o h1 ao mudar de rota).
   useEffect(() => {
-    if (escolhido && escolhido !== ultimoEscolhido.current) document.getElementById(ids.combo)?.focus()
-    ultimoEscolhido.current = escolhido
-  }, [escolhido, ids.combo])
+    if ((state as { focarGrade?: boolean } | null)?.focarGrade) tituloGrade.current?.focus()
+  }, [state, ambienteId])
 
   return (
     <section className="space-y-6">
-      <TituloPagina>Grade de horários</TituloPagina>
+      <TituloPagina>Reservar ambiente</TituloPagina>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+      {catalogo.isError && <p role="alert">Não foi possível carregar o catálogo: {catalogo.error.message}</p>}
+      {config && (
+        <PainelOcupacao
+          ambientes={ambientes}
+          config={config}
+          semana={semana}
+          agora={agora}
+          atual={ambienteId}
+          hrefAmbiente={hrefAmbiente}
+        />
+      )}
+
+      <div className="flex flex-col gap-4 rounded-md bg-card p-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-end sm:p-4">
         <div className="flex min-w-0 flex-col gap-1.5 sm:w-80">
           <Label id={ids.rotulo} htmlFor={ids.combo}>
             Ambiente
@@ -176,120 +258,120 @@ export default function Grade() {
           </Popover>
         </div>
 
-        <nav aria-label="Semana" className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', somarDias(semana, -7))}>
-            <ChevronLeft aria-hidden="true" />
-            Semana anterior
-          </Button>
-          <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', hoje())}>
-            Hoje
-          </Button>
-          <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', somarDias(semana, 7))}>
-            Próxima semana
-            <ChevronRight aria-hidden="true" />
-          </Button>
-        </nav>
+        <div className="flex flex-col gap-1.5">
+          <p aria-live="polite" className="text-sm font-medium">
+            {rotuloSemana}
+          </p>
+          <nav aria-label="Semana" className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', somarDias(semana, -7))}>
+              <ChevronLeft aria-hidden="true" />
+              Semana anterior
+            </Button>
+            <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', hoje())}>
+              Hoje
+            </Button>
+            <Button variant="outline" className="h-11 sm:h-9" onClick={() => mudar('dia', somarDias(semana, 7))}>
+              Próxima semana
+              <ChevronRight aria-hidden="true" />
+            </Button>
+          </nav>
+        </div>
+
+        <div className="flex min-h-11 items-center gap-2 sm:min-h-9">
+          <Checkbox id={ids.fds} checked={fds} onCheckedChange={(c) => mudar('fds', c === true ? '1' : null)} />
+          <Label htmlFor={ids.fds} className="font-normal">
+            Mostrar fim de semana
+          </Label>
+        </div>
       </div>
 
-      <p aria-live="polite" className="text-sm font-medium">
-        {rotuloSemana}
-      </p>
+      {ambiente && (
+        <section aria-labelledby={ids.titulo} className="space-y-3">
+          <h2 id={ids.titulo} ref={tituloGrade} tabIndex={-1} className="scroll-mt-4 text-lg font-semibold break-words">
+            Horários de {ambiente.desc}
+          </h2>
+          {ocupacao.isPending && <output className="block">Carregando ocupação…</output>}
+          {ocupacao.isError && <p role="alert">Não foi possível carregar a ocupação: {ocupacao.error.message}</p>}
 
-      {catalogo.isError && <p role="alert">Não foi possível carregar o catálogo: {catalogo.error.message}</p>}
-      {config && !escolhido && (
-        <PainelOcupacao ambientes={ambientes} config={config} semana={semana} agora={agora} hrefAmbiente={hrefAmbiente} />
-      )}
-      {escolhido && (
-        <Link to={`?dia=${semana}`} className="inline-flex min-h-11 items-center gap-1.5 font-medium text-link underline-offset-2 hover:underline sm:min-h-8">
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Voltar para a ocupação da semana
-        </Link>
-      )}
-      {ambienteId && ocupacao.isPending && <output className="block">Carregando ocupação…</output>}
-      {ocupacao.isError && <p role="alert">Não foi possível carregar a ocupação: {ocupacao.error.message}</p>}
+          {pronto && (
+            <>
+              {/* Tabela a partir de 640px (rolagem horizontal própria se faltar espaço). */}
+              <div className="hidden overflow-x-auto rounded-md bg-card p-2 shadow-sm sm:block">
+                <table className="w-full border-separate border-spacing-0.5 text-sm">
+                  <caption className="mb-2 px-1 text-left text-sm text-muted-foreground">
+                    Ocupação de {ambiente.desc}, {rotuloSemana.toLowerCase()}, em intervalos de 30 minutos
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" className="sticky left-0 bg-card p-2 text-left">
+                        Horário
+                      </th>
+                      {dias.map((d) => (
+                        <th
+                          key={d}
+                          scope="col"
+                          className={cn('min-w-32 p-2 text-left font-semibold capitalize', d < hojeLocal && 'text-muted-foreground')}
+                        >
+                          {formatarDiaSemana(d)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {colunas[0].slots.map((linha, i) => (
+                      <tr key={linha.rotulo}>
+                        <th scope="row" className="sticky left-0 bg-card px-2 py-1 text-left align-top font-medium tabular-nums">
+                          {linha.rotulo}
+                        </th>
+                        {colunas.map(({ d, slots, porInicio }) => {
+                          const seg = porInicio.get(i)
+                          if (!seg) return null
+                          const { classe, conteudo } = celula(seg, slots, d, reservar)
+                          return (
+                            <td key={d} rowSpan={seg.tam} className={cn('rounded-sm', classe)}>
+                              {conteudo}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-      {ambiente && config && ocupacao.data && (
-        <>
-          {/* Tabela a partir de 640px (rolagem horizontal própria se faltar espaço). */}
-          <div className="hidden overflow-x-auto sm:block">
-            <table className="w-full border-collapse text-sm">
-              <caption className="mb-2 text-left font-medium">
-                Ocupação de {ambiente.desc}, {rotuloSemana.toLowerCase()}, em intervalos de 30 minutos
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col" className="sticky left-0 bg-background p-2 text-left">
-                    Horário
-                  </th>
-                  {dias.map((d) => (
-                    <th key={d} scope="col" className="min-w-36 p-2 text-left font-semibold capitalize">
-                      {formatarDiaSemana(d)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {faixa(dias[0]).map((linha, i) => (
-                  <tr key={linha.rotulo} className="border-t border-border">
-                    <th scope="row" className="sticky left-0 bg-background p-2 text-left font-medium tabular-nums">
-                      {linha.rotulo}
-                    </th>
-                    {dias.map((d) => {
-                      const slot = faixa(d)[i]
-                      return (
-                        <td key={d} className="p-1">
-                          <Celula
-                            estado={estadoDoSlot(slot, ocupacao.data, config, agora)}
-                            slot={slot}
-                            dia={d}
-                            aoReservar={() => reservar(slot)}
-                          />
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Abaixo de 640px: lista de horários de um dia (reflow em 320px). */}
-          <div className="space-y-4 sm:hidden">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={ids.dia}>Dia</Label>
-              <select
-                id={ids.dia}
-                value={dia}
-                onChange={(e) => mudar('dia', e.target.value)}
-                className="h-11 w-full rounded-md border border-input bg-background px-3 text-base capitalize outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                {dias.map((d) => (
-                  <option key={d} value={d}>
-                    {formatarDiaSemana(d)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <h2 className="text-lg font-semibold capitalize">
-              {ambiente.desc}: {formatarDiaSemana(dia)}
-            </h2>
-            <ul className="divide-y divide-border">
-              {faixa(dia).map((slot) => (
-                <li key={slot.inicio} className="flex items-center gap-3 py-1.5">
-                  <span className="w-12 shrink-0 font-medium tabular-nums">{slot.rotulo}</span>
-                  <div className="min-w-0 flex-1">
-                    <Celula
-                      estado={estadoDoSlot(slot, ocupacao.data, config, agora)}
-                      slot={slot}
-                      dia={dia}
-                      aoReservar={() => reservar(slot)}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
+              {/* Abaixo de 640px: lista de horários de um dia (reflow em 320px). */}
+              <div className="space-y-4 sm:hidden">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={ids.dia}>Dia</Label>
+                  <select
+                    id={ids.dia}
+                    value={diaLista}
+                    onChange={(e) => mudar('dia', e.target.value)}
+                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-base capitalize outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    {dias.map((d) => (
+                      <option key={d} value={d}>
+                        {formatarDiaSemana(d)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <h3 className="font-semibold capitalize">{formatarDiaSemana(diaLista)}</h3>
+                <ul className="space-y-1">
+                  {lista.segs.map((seg) => {
+                    const { classe, conteudo } = celula(seg, lista.slots, diaLista, reservar)
+                    return (
+                      <li key={seg.ini} className="flex items-stretch gap-3">
+                        <span className="w-12 shrink-0 pt-2.5 font-medium tabular-nums">{lista.slots[seg.ini].rotulo}</span>
+                        <div className={cn('min-w-0 flex-1 rounded-md', classe, seg.estado !== 'livre' && 'py-2')}>{conteudo}</div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </>
+          )}
+        </section>
       )}
     </section>
   )
