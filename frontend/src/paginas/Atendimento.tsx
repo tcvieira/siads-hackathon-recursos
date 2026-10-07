@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { CardAtendimento, Catalogo, Periodo, StatusReserva } from '@/api/tipos'
 import { useCatalogo, usePainelAtendimento } from '@/api/consultas'
 import { TituloPagina } from '@/componentes/TituloPagina'
@@ -47,6 +47,7 @@ export default function Atendimento() {
           {DIAS} dias anteriores
         </Button>
         <Button variant="outline" className="min-h-11 sm:min-h-9" onClick={() => setInicio(hoje())} disabled={inicio === hoje()}>
+          <CalendarCheck aria-hidden="true" />
           Hoje
         </Button>
         <Button variant="outline" className="min-h-11 sm:min-h-9" onClick={() => setInicio(somarDias(inicio, DIAS))}>

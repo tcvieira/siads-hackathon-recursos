@@ -1,3 +1,4 @@
+import { CalendarPlus, CalendarX, Pencil, RotateCw } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -114,6 +115,7 @@ function ItemReserva({ reserva, catalogo }: { reserva: Reserva; catalogo?: Catal
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" className={ALVO}>
             <Link to={`/reservas/${encodeURIComponent(reserva.id)}/editar`}>
+              <Pencil aria-hidden="true" />
               Editar<span className="sr-only"> reserva {reserva.finalidade} de {dia}</span>
             </Link>
           </Button>
@@ -122,6 +124,7 @@ function ItemReserva({ reserva, catalogo }: { reserva: Reserva; catalogo?: Catal
           <AlertDialog open={aberto} onOpenChange={(v) => !cancelar.isPending && setAberto(v)}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className={ALVO} aria-describedby={erro ? idErro : undefined}>
+                <CalendarX aria-hidden="true" />
                 Cancelar<span className="sr-only"> reserva {reserva.finalidade} de {dia}</span>
               </Button>
             </AlertDialogTrigger>
@@ -167,7 +170,10 @@ export default function MinhasReservas() {
     <section className="space-y-4">
       <TituloPagina>Minhas reservas</TituloPagina>
       <Button asChild className={ALVO}>
-        <Link to="/reservas/nova">Nova reserva</Link>
+        <Link to="/reservas/nova">
+          <CalendarPlus aria-hidden="true" />
+          Nova reserva
+        </Link>
       </Button>
 
       {isPending ? (
@@ -176,6 +182,7 @@ export default function MinhasReservas() {
         <div role="alert" className="space-y-2">
           <p>Não foi possível carregar suas reservas: {error.message}</p>
           <Button variant="outline" className={ALVO} onClick={() => void refetch()}>
+            <RotateCw aria-hidden="true" />
             Tentar de novo
           </Button>
         </div>

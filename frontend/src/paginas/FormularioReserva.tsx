@@ -5,7 +5,7 @@
  * (término sugerido: início + 1 h). Só vale em /reservas/nova.
  */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CircleAlertIcon, PlusIcon } from 'lucide-react'
+import { ArrowLeftIcon, CircleAlertIcon, PlusIcon, SaveIcon, Trash2Icon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import type { FieldErrors } from 'react-hook-form'
@@ -557,6 +557,7 @@ function Formulario({ id, catalogo, inicial }: { id?: string; catalogo: Catalogo
                     requestAnimationFrame(() => adicionarRef.current?.focus())
                   }}
                 >
+                  <Trash2Icon aria-hidden="true" />
                   Remover<span className="sr-only"> período {n + 1}</span>
                 </Button>
               )}
@@ -662,10 +663,14 @@ function Formulario({ id, catalogo, inicial }: { id?: string; catalogo: Catalogo
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" className="h-11 sm:h-9" aria-disabled={salvando || undefined}>
+          <SaveIcon aria-hidden="true" />
           {salvando ? 'Salvando…' : id ? 'Salvar alterações' : 'Salvar reserva'}
         </Button>
         <Button asChild variant="outline" className="h-11 sm:h-9">
-          <Link to="/minhas-reservas">Voltar sem salvar</Link>
+          <Link to="/minhas-reservas">
+            <ArrowLeftIcon aria-hidden="true" />
+            Voltar sem salvar
+          </Link>
         </Button>
       </div>
     </form>
