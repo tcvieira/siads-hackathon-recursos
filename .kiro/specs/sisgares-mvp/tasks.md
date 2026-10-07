@@ -147,7 +147,7 @@ completa só com teclado, axe sem violações A/AA e reflow em 320px (steering d
 - [x] 3.6 `/grade`: tabela semântica de 30 min com estados em texto + ícone e botões "Reservar às HH:MM de dd/mm", que abrem o formulário preenchido; lista diária abaixo de 640px. _R7_
 - [x] 3.7 `/atendimento`: cards por data (hoje + 7 dias, com navegação), `<h2>` por dia, lista semântica. _R8_
 - [x] 3.8 `/notificacoes`: caixa de saída estruturada (sem renderizar o HTML do e-mail) + pedidos SNP. _R6.4_
-- [ ] 3.9 Depois da **M5**: `VITE_USE_MOCKS=0`, login real e as telas contra a API real.
+- [x] 3.9 Depois da **M5**: `VITE_USE_MOCKS=0`, login real e as telas contra a API real.
 
 ---
 
