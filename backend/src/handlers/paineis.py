@@ -32,6 +32,9 @@ from dominio.modelos import (
 from dominio.tempo import FUSO, para_datetime, para_iso
 
 JANELA_PADRAO = timedelta(days=7)
+# O GSI `AGENDA` ordena pelo início: um período que começou antes de `de` e ainda não terminou
+# só aparece se a consulta recuar. 31 dias cobrem o maior período do CSV (25 dias).
+RECUO_AGENDA = timedelta(days=31)
 
 app = APIGatewayHttpResolver()
 registrar_erros(app)
@@ -94,10 +97,14 @@ def atendimento():
         raise proibido()
     de, ate = _janela()
     repo, momento = obter_repo(), agora()
-    ids = [p.reservaId for p in repo.agenda(para_iso(de), para_iso(ate))
-           if not p.cancelada and (usuario.is_admin or usuario.setorId in p.setoresIds)]
+    ids = [p.reservaId for p in repo.agenda(para_iso(de - RECUO_AGENDA), para_iso(ate))
+           if para_datetime(p.termino) > de and not p.cancelada
+           and (usuario.is_admin or usuario.setorId in p.setoresIds)]
     cards = []
     for r in repo.obter_metas(ids):
+        # O PER# vem do GSI (eventual); o META do BatchGetItem é a fonte do setor e do cancelamento.
+        if r.cancelada or not (usuario.is_admin or usuario.setorId in r.setoresIds):
+            continue
         r.status = regras.status(r, momento)
         cards.append(CardAtendimento(reserva=mascarar_para(usuario, r),
                                      pedidosSnp=_do_setor(usuario, repo.pedidos_snp(r.id))))

@@ -371,12 +371,13 @@ class Repositorio:
         return [_para(PeriodoAgenda, i) for i in self._gsi1("AGENDA", de, ate)]
 
     def obter_metas(self, ids: Iterable[str]) -> list[Reserva]:
-        """BatchGetItem dos META em lotes de 100, repetindo as UnprocessedKeys. Ordem de `ids`."""
+        """BatchGetItem consistente dos META em lotes de 100 (com retry). Ordem de `ids`."""
         unicos = list(dict.fromkeys(ids))
         nome, achados = self.tabela.name, {}
         for k in range(0, len(unicos), LOTE_BATCH_GET):
             pedido = {nome: {"Keys": [{"PK": _pk_reserva(i), "SK": "META"}
-                                      for i in unicos[k:k + LOTE_BATCH_GET]]}}
+                                      for i in unicos[k:k + LOTE_BATCH_GET]],
+                             "ConsistentRead": True}}
             for _ in range(MAX_TENTATIVAS_BATCH):
                 resp = self.cliente.batch_get_item(RequestItems=pedido)
                 for item in resp.get("Responses", {}).get(nome, []):

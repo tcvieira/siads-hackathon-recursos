@@ -120,6 +120,33 @@ def test_atendimento_solicitante_403(repo):
     assert chamar("/painel/atendimento", SOLICITANTE, JANELA) == (403, {"mensagem": "Acesso negado."})
 
 
+def test_atendimento_inclui_periodo_que_comecou_antes_de_de(repo):
+    """Período de 10/11 18:00 a 11/11 09:00 (RN1) aparece no painel de 11/11."""
+    entrada = ReservaEntrada(finalidade="Plantão", participantes=5, ambienteId="3",
+                             periodos=[Periodo(f"{D}18:00{F}", f"2026-11-11T09:00{F}")],
+                             recursos=[])
+    noite = servico.criar(entrada, DONO, repo.carregar_cadastros(), repo, AGORA)
+    criar(repo, "7", "10:00", "11:00")  # termina antes de `de`: fora
+    status, dados = chamar("/painel/atendimento", ADMIN,
+                           {"de": f"2026-11-11T00:00{F}", "ate": f"2026-11-12T00:00{F}"})
+    assert status == 200 and [c["reserva"]["id"] for c in dados] == [noite.id]
+
+
+def test_atendimento_refiltra_pelo_meta(repo, tabela):
+    """O PER# do GSI pode estar atrasado; setor e cancelamento valem pelo META."""
+    sala = criar(repo, "3", "14:00", "15:00")  # SMSG (1) e SESOT (23)
+    outra = criar(repo, "7", "10:00", "11:00")
+    tabela.update_item(Key={"PK": f"RESE#{sala.id}", "SK": "META"},
+                       UpdateExpression="SET setoresIds = :s",
+                       ExpressionAttributeValues={":s": ["23"]})
+    tabela.update_item(Key={"PK": f"RESE#{outra.id}", "SK": "META"},
+                       UpdateExpression="SET cancelada = :c",
+                       ExpressionAttributeValues={":c": True})
+    assert chamar("/painel/atendimento", ATENDENTE_SMSG, JANELA) == (200, [])
+    status, dados = chamar("/painel/atendimento", ADMIN, JANELA)
+    assert [c["reserva"]["id"] for c in dados] == [sala.id]
+
+
 # --- /notificacoes -------------------------------------------------------------------------
 
 
