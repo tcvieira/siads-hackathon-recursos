@@ -85,6 +85,19 @@ def test_rn1_sem_periodos_bloqueado(catalogo):
     assert erros[0].periodoIndex is None
 
 
+def test_rn1_periodos_sobrepostos_no_mesmo_pedido_bloqueado(catalogo):
+    erros = validar(catalogo, entrada(("2026-11-10T14:00:00-03:00", "2026-11-10T16:00:00-03:00"),
+                                      ("2026-11-10T15:00:00-03:00", "2026-11-10T17:00:00-03:00")))
+    assert codigos(erros) == [CodigoErro.PERIODO_INVALIDO]
+    assert erros[0].periodoIndex == 1
+
+
+def test_rn1_periodos_encostados_no_mesmo_pedido_aceito(catalogo):
+    erros = validar(catalogo, entrada(("2026-11-10T14:00:00-03:00", "2026-11-10T16:00:00-03:00"),
+                                      ("2026-11-10T16:00:00-03:00", "2026-11-10T17:00:00-03:00")))
+    assert erros == []
+
+
 def test_rn2_agua_cafe_sem_ambiente_sem_complemento_bloqueado(catalogo):
     erros = validar(catalogo, entrada(ambienteId=None, recursos=[ItemRecurso("3", 1)]))
     assert codigos(erros) == [CodigoErro.CAMPO_OBRIGATORIO]

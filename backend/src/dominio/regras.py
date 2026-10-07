@@ -92,6 +92,26 @@ def _validar_periodos(reserva, config, agora, alterados) -> list[Erro]:
                               f"{config.antecedenciaMin} minutos de antecedência.",
                               periodoIndex=n,
                               sugestao=f"a partir de {hhmm(sugestao)} de {data_curta(sugestao)}"))
+    return erros + _sobrepostos(reserva.periodos)
+
+
+def _sobrepostos(periodos) -> list[Erro]:
+    """Períodos válidos do mesmo pedido que se cruzam: aponta o de maior índice."""
+    validos = []
+    for n, p in enumerate(periodos):
+        try:
+            ini, fim = para_datetime(p.inicio), para_datetime(p.termino)
+        except (TypeError, ValueError):
+            continue
+        if fim > ini:
+            validos.append((n, ini, fim))
+    erros = []
+    for n, ini, fim in validos:
+        outro = next((m for m, i, f in validos if m < n and ini < f and i < fim), None)
+        if outro is not None:
+            erros.append(Erro("periodos", CodigoErro.PERIODO_INVALIDO,
+                              f"O período {n + 1} se sobrepõe ao período {outro + 1}.",
+                              periodoIndex=n))
     return erros
 
 
