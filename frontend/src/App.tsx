@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import { ErroApi } from '@/api/cliente'
 import { useSessao } from '@/auth/contexto'
@@ -7,7 +8,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { configuracaoAusente } from '@/config'
 import { Guarda, Inicio, NaoEncontrada } from '@/layout/Guarda'
 import Layout from '@/layout/Layout'
-import { ConfiguracaoAusente, TelaCarregando, TelaLogin } from '@/layout/TelaAvulsa'
+import { ConfiguracaoAusente, TelaCarregando } from '@/layout/TelaAvulsa'
+import { TelaLogin } from '@/layout/TelaLogin'
 import Atendimento from '@/paginas/Atendimento'
 import FormularioReserva from '@/paginas/FormularioReserva'
 import Grade from '@/paginas/Grade'
@@ -46,6 +48,10 @@ const clienteQuery = new QueryClient({
 
 function Portao() {
   const { carregando, usuario } = useSessao()
+  // Sem sessão a URL volta para "/": depois do login, "/" redireciona pelo papel.
+  useEffect(() => {
+    if (!carregando && !usuario) void router.navigate('/', { replace: true })
+  }, [carregando, usuario])
   if (carregando) return <TelaCarregando />
   if (!usuario) return <TelaLogin />
   return <RouterProvider router={router} />

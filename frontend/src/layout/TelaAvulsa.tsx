@@ -1,9 +1,6 @@
-/** Telas fora do leiaute logado: configuração ausente, carregando e login (R1.1). */
-import { LogIn } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
-import { useSessao } from '@/auth/contexto'
+/** Telas fora do leiaute logado: configuração ausente e carregando (o login fica em TelaLogin.tsx). */
+import type { ReactNode } from 'react'
 import { TituloPagina } from '@/componentes/TituloPagina'
-import { Button } from '@/components/ui/button'
 
 function TelaAvulsa({ titulo, children }: { titulo: string; children?: ReactNode }) {
   return (
@@ -41,23 +38,6 @@ export function TelaCarregando() {
   return (
     <TelaAvulsa titulo="Carregando">
       <output className="block">Conferindo sua sessão…</output>
-    </TelaAvulsa>
-  )
-}
-
-/** Sem sessão: redireciona para o login do Cognito; com erro, oferece tentar de novo. */
-export function TelaLogin() {
-  const { entrar, erro } = useSessao()
-  useEffect(() => {
-    if (!erro) entrar()
-  }, [erro, entrar])
-  return (
-    <TelaAvulsa titulo="Entrar no SISGARES">
-      {erro ? <p role="alert">{erro}</p> : <output className="block">Redirecionando para a página de login…</output>}
-      <Button onClick={entrar}>
-        <LogIn aria-hidden="true" />
-        Entrar
-      </Button>
     </TelaAvulsa>
   )
 }

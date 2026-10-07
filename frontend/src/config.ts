@@ -15,9 +15,8 @@ export const apiUrl = usarMocks ? '/api' : String(env.VITE_API_URL ?? '').replac
 export const cognito = {
   authority: String(env.VITE_COGNITO_AUTHORITY ?? ''),
   clientId: String(env.VITE_COGNITO_CLIENT_ID ?? ''),
-  /** URL do domínio hospedado (login e /logout), sem barra final. */
-  dominio: String(env.VITE_COGNITO_DOMAIN ?? '').replace(/\/+$/, ''),
-  redirectUri: String(env.VITE_REDIRECT_URI || `${window.location.origin}/`),
+  /** Id do user pool: último segmento do path da authority (https://cognito-idp.<região>.amazonaws.com/<id>). */
+  userPoolId: String(env.VITE_COGNITO_AUTHORITY ?? '').replace(/\/+$/, '').split('/').pop() ?? '',
 }
 
 /** Nomes das variáveis que faltam para o modo real (vazio nos mocks). */
@@ -28,7 +27,6 @@ export const configuracaoAusente: string[] = usarMocks
         ['VITE_API_URL', apiUrl],
         ['VITE_COGNITO_AUTHORITY', cognito.authority],
         ['VITE_COGNITO_CLIENT_ID', cognito.clientId],
-        ['VITE_COGNITO_DOMAIN', cognito.dominio],
       ] as const
     )
       .filter(([, valor]) => !valor)
