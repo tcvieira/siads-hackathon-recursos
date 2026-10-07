@@ -59,9 +59,11 @@ const ICONE: Record<EstadoCelula, string> = {
 
 interface Props {
   agora?: Date // injetável para testes/demonstração
+  /** chamado ao acionar uma célula livre: leva ao formulário pré-preenchido (3.4) */
+  onReservar?: (ambienteId: string, inicio: Date) => void
 }
 
-export function Grade({ agora: agoraProp }: Props) {
+export function Grade({ agora: agoraProp, onReservar }: Props) {
   // Estabiliza "agora" numa única avaliação (evita Date() impuro a cada render).
   const [agora] = useState(() => agoraProp ?? new Date())
   const [ambienteId, setAmbienteId] = useState(AMBIENTES_DEMO[0].id)
@@ -87,10 +89,7 @@ export function Grade({ agora: agoraProp }: Props) {
   const ambienteDesc = AMBIENTES_DEMO.find((a) => a.id === ambienteId)?.desc ?? ''
 
   function reservar(inicio: Date) {
-    // Integração real na tarefa 3.4: navega para /reservas/nova pré-preenchido.
-    // Aqui só anuncia a intenção (mantém o fluxo demonstrável).
-    // eslint-disable-next-line no-alert
-    alert(`Reservar ${ambienteDesc} em ${rotuloDia(inicio)} às ${rotuloHora(inicio)}`)
+    onReservar?.(ambienteId, inicio)
   }
 
   return (
