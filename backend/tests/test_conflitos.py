@@ -51,7 +51,10 @@ def test_rn5_margem_1120_bloqueado(nomes):
 
 
 def test_rn5_margem_1130_aceito():
-    assert conflitos_ambiente([per("11:30", "12:00")], {"1": [ocup("09:00", "11:00")]}, MARGEM) == []
+    ocupacoes = {"1": [ocup("09:00", "11:00")]}
+    bloqueado = conflitos_ambiente([per("11:20", "12:00")], ocupacoes, MARGEM)
+    assert bloqueado[0].sugestao == "livre a partir de 11:30"
+    assert conflitos_ambiente([per("11:30", "12:00")], ocupacoes, MARGEM) == []
 
 
 def test_rn5_margem_antes_do_existente():
