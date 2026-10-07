@@ -31,7 +31,7 @@ Regras:
 | M2 — `hierarquia` e `conflitos` verdes | 0:45 | Frente 2 (2.1, 2.3) | `repo.py` e handlers (2.7–2.9) |
 | M3 — stack no ar com stubs (`API_URL`, `TABLE_NAME`) | 0:50 | Frente 1 (1.5) | Variáveis `VITE_*` (1.6); seed (1.7). **Feito**: `API_URL`, `TABLE_NAME` e `VITE_*` no `.env` |
 | M4 — handlers reais prontos | 1:25 | Frente 2 (2.11) | Redeploy (1.8) |
-| M5 — API real no ar | 1:30 | Frente 1 (1.8) | Integração (Fase 4) |
+| M5 — API real no ar | 1:30 | Frente 1 (1.8). **Feito**, com notificações | Integração (Fase 4) |
 
 ### Ordem de corte se o tempo apertar
 
@@ -102,13 +102,13 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
   - [x] `--dry-run` confere sem gravar: 90 itens de catálogo, 9 reservas do cenário + 192 do CSV (189 com ambiente, 12 em local próprio), 815 itens de reserva.
   - [x] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada. 907 itens (92 de catálogo/contadores + 815 de reservas: 201 META, 208 PER, 196 OCUP#AMBI, 210 OCUP#RECU); reexecução: 0 gravados.
-- [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
+- [x] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
   - [x] O redeploy sem mudança no template não cria recursos novos (só atualiza código). Feito com a 2.10 ainda em stub: um novo redeploy entra quando ela ficar pronta.
   - [x] ID tokens das contas de demo por `uv run scripts/obter_tokens.py` (login SRP, tokens em `~/.cache/sisgares/tokens.json`).
   - [x] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
   - [x] Primeira escrita (`POST /reservas`) funciona; testar sem o statement inline `kms:GenerateDataKey` e removê-lo se a escrita continuar ok (`design.md` §12.5). _R13.4_ Removido: criar e cancelar funcionam só com `kms:Decrypt`.
   - [x] Log group de cada função recebe as decisões `allow`/`deny` em JSON, sem e-mail. _R9.2_
-  - [ ] A criação gera `EMAIL#…` e, para a SEART, `SNP#…` (stream funcionando). Depende da 2.10 e de um novo redeploy.
+  - [x] A criação gera `EMAIL#…` e, para a SEART, `SNP#…` (stream funcionando). Com a 2.10 no ar: criar → 4 e-mails (SMSG, SEART, SELOG, SESOT) + `SNP-2026-00002` da SEART; alterar → e-mails "alterada" com o período antigo e o novo, mesmo número SNP; cancelar → e-mails "cancelada" e SNP `cancelado`.
   - [x] Fumaça da API com as 3 contas: validar (RN1, RN2, RN3, RN5, RN6, RN8), criar (201), repetir (409), minhas reservas, detalhe e painel mascarados para o atendente, alterar (versão 2), cancelar (libera o horário), 403 para ações alheias e 404 genérico.
 
 ## Frente 2 — Backend
