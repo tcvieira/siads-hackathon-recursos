@@ -1,111 +1,122 @@
+/*
+ * Estilos base do SISGARES, com foco em acessibilidade (ABNT NBR 17225:2025).
+ * Tokens de cor com contraste conferido contra o fundo:
+ *   --cor-texto (#1a1a2e) sobre --cor-fundo (#ffffff) ~ 15:1  (AAA)
+ *   --cor-primaria (#1b4b8f) sobre #ffffff ~ 7.6:1            (AAA p/ texto normal)
+ *   --cor-perigo (#b00020) sobre #ffffff ~ 6.6:1              (AA+)
+ *   texto sobre --cor-primaria usa #ffffff ~ 7.6:1            (AAA)
+ * Componentes de UI (bordas/ícones) usam no mínimo 3:1 (5.11.4).
+ */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --cor-fundo: #ffffff;
+  --cor-superficie: #f3f5f9;
+  --cor-texto: #1a1a2e;
+  --cor-texto-suave: #41465b;   /* ~8:1 sobre branco */
+  --cor-primaria: #1b4b8f;
+  --cor-primaria-escura: #133868;
+  --cor-perigo: #b00020;
+  --cor-sucesso: #1b5e20;       /* verde escuro ~6.5:1 */
+  --cor-aviso: #8a5a00;         /* âmbar escuro ~5:1 */
+  --cor-borda: #5b6072;         /* ~4.6:1 sobre branco: borda de campo visível (5.11.4) */
+  --cor-foco: #0b63ce;
+  --raio: 6px;
+  --espaco: 0.5rem;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
+}
+
+html {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height: 1.5;            /* 5.12.1: entrelinha >= 1.5 */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-size: 1rem;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Foco visível de alto contraste em TODO elemento focável (5.1.1 / 5.11.6). */
+:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Mantém foco visível mesmo onde o autor remove o outline padrão. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+
+/* Link "pular para o conteúdo" — visível ao receber foco (5.7.11). */
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: -3rem;
+  background: var(--cor-primaria);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  z-index: 100;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Conteúdo só para leitores de tela (5.10.1: não depender só de visual). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+a {
+  color: var(--cor-primaria);
+  text-underline-offset: 2px;   /* link identificável além da cor: sublinhado (5.7 / 1.4.1) */
+}
+a:hover {
+  color: var(--cor-primaria-escura);
+}
+
+/* Alvo de toque mínimo 24px (5.8.7); 44px no mobile (recomendação). */
+button,
+a.botao {
+  min-height: 24px;
+  min-width: 24px;
+}
+
+main {
+  padding: 1rem;
+  max-width: 72rem;
+  margin: 0 auto;
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+  font-size: 1.5rem;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Respeita a preferência do sistema por menos movimento (5.15.2). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
