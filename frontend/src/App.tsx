@@ -23,6 +23,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Inicio /> },
       { path: 'grade', element: <Guarda papeis={SOLICITANTE}><Grade /></Guarda> },
+      { path: 'grade2', element: <Guarda papeis={SOLICITANTE}><Grade painel /></Guarda> },
       { path: 'reservas/nova', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
       { path: 'reservas/:id/editar', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
       { path: 'minhas-reservas', element: <Guarda papeis={SOLICITANTE}><MinhasReservas /></Guarda> },

@@ -1,5 +1,5 @@
 /** Hooks do react-query para cada rota da API (design.md §4). Erros chegam como `ErroApi`. */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requisitar } from '@/api/cliente'
 import type {
   CaixaNotificacoes,
@@ -37,6 +37,18 @@ export function useOcupacao(ambienteId: string | null | undefined, de: string, a
     queryFn: () =>
       requisitar<PeriodoOcupado[]>(`/ambientes/${encodeURIComponent(ambienteId!)}/ocupacao${comPeriodo(de, ate)}`),
     enabled: !!ambienteId,
+  })
+}
+
+/** Ocupação de vários ambientes no mesmo período (mesma chave de cache de `useOcupacao`). */
+export function useOcupacaoDeVarios(ids: string[], de: string, ate: string) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: ['ocupacao', id, de, ate],
+      queryFn: () => requisitar<PeriodoOcupado[]>(`/ambientes/${encodeURIComponent(id)}/ocupacao${comPeriodo(de, ate)}`),
+      staleTime: 60_000,
+      placeholderData: keepPreviousData,
+    })),
   })
 }
 

@@ -2,7 +2,7 @@
  * Leiaute das telas logadas: skip link, header com nav "Principal" (menu por papel, R1.4), main.
  * Ao trocar de rota, o foco vai para o `<h1>` da nova página (TituloPagina).
  */
-import { LogOut } from 'lucide-react'
+import { CalendarDays, CalendarRange, ClipboardList, ListChecks, LogOut, Mail, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useSessao, useUsuario } from '@/auth/contexto'
@@ -10,11 +10,12 @@ import { PAPEIS, pode, type Papel } from '@/auth/usuario'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const MENU: { para: string; rotulo: string; papeis: Papel[] }[] = [
-  { para: '/grade', rotulo: 'Grade de horários', papeis: ['solicitante', 'admin'] },
-  { para: '/minhas-reservas', rotulo: 'Minhas reservas', papeis: ['solicitante', 'admin'] },
-  { para: '/atendimento', rotulo: 'Atendimento', papeis: ['atendente', 'admin'] },
-  { para: '/notificacoes', rotulo: 'Notificações', papeis: ['atendente', 'admin'] },
+const MENU: { para: string; rotulo: string; icone: LucideIcon; papeis: Papel[] }[] = [
+  { para: '/grade', rotulo: 'Grade de horários', icone: CalendarDays, papeis: ['solicitante', 'admin'] },
+  { para: '/grade2', rotulo: 'Grade 2', icone: CalendarRange, papeis: ['solicitante', 'admin'] },
+  { para: '/minhas-reservas', rotulo: 'Minhas reservas', icone: ListChecks, papeis: ['solicitante', 'admin'] },
+  { para: '/atendimento', rotulo: 'Atendimento', icone: ClipboardList, papeis: ['atendente', 'admin'] },
+  { para: '/notificacoes', rotulo: 'Notificações', icone: Mail, papeis: ['atendente', 'admin'] },
 ]
 
 const NOME_PAPEL: Record<Papel, string> = { solicitante: 'Solicitante', atendente: 'Atendente', admin: 'Administrador' }
@@ -45,17 +46,18 @@ export default function Layout() {
           <p className="text-lg font-bold tracking-wide">SISGARES</p>
           <nav aria-label="Principal" className="flex-1">
             <ul className="flex flex-wrap gap-1">
-              {MENU.filter((item) => pode(usuario, item.papeis)).map((item) => (
+              {MENU.filter((item) => pode(usuario, item.papeis)).map(({ icone: Icone, ...item }) => (
                 <li key={item.para}>
                   <NavLink
                     to={item.para}
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex min-h-9 items-center rounded-md px-3 py-1.5 text-sm font-semibold hover:bg-white/15',
+                        'inline-flex min-h-9 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold hover:bg-white/15',
                         isActive && 'bg-white/20 underline decoration-2 underline-offset-8',
                       )
                     }
                   >
+                    <Icone aria-hidden="true" className="size-4" />
                     {item.rotulo}
                   </NavLink>
                 </li>

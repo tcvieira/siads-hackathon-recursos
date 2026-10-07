@@ -1,9 +1,10 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Ban, CalendarPlus, Check, ChevronLeft, ChevronRight, ChevronsUpDown, History, Hourglass, Lock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useCatalogo, useOcupacao } from '@/api/consultas'
 import type { Config, PeriodoOcupado } from '@/api/tipos'
+import { PainelOcupacao } from '@/componentes/PainelOcupacao'
 import { TituloPagina } from '@/componentes/TituloPagina'
 import { Button } from '@/components/ui/button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -65,7 +66,8 @@ function Celula({ estado, slot, dia, aoReservar }: { estado: Estado; slot: Slot;
   )
 }
 
-export default function Grade() {
+/** `painel`: na /grade2, mostra a ocupação da semana enquanto nenhum ambiente foi escolhido. */
+export default function Grade({ painel = false }: { painel?: boolean }) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [agora, setAgora] = useState(Date.now)
@@ -105,6 +107,21 @@ export default function Grade() {
   const faixa = (d: string) => slotsDoDia(d, config?.faixaInicio, config?.faixaFim)
   const rotuloSemana = `Semana de ${formatarData(dias[0])} a ${formatarData(dias[6])}`
   const ids = { rotulo: `${idBase}-rotulo`, combo: `${idBase}-ambiente`, lista: `${idBase}-lista`, dia: `${idBase}-dia` }
+
+  // Link `?dia=<semana>&ambiente=<id>` (preserva outros params; sem replace, o Voltar retorna ao painel).
+  const hrefAmbiente = (id: string) => {
+    const novo = new URLSearchParams(params)
+    novo.set('dia', semana)
+    novo.set('ambiente', id)
+    return `?${novo}`
+  }
+
+  // Ao escolher um ambiente no painel, o painel some e leva o foco junto: leva para o combobox.
+  const tinhaAmbiente = useRef(!!ambienteId)
+  useEffect(() => {
+    if (painel && ambienteId && !tinhaAmbiente.current) document.getElementById(ids.combo)?.focus()
+    tinhaAmbiente.current = !!ambienteId
+  }, [painel, ambienteId, ids.combo])
 
   return (
     <section className="space-y-6">
@@ -178,7 +195,10 @@ export default function Grade() {
       </p>
 
       {catalogo.isError && <p role="alert">Não foi possível carregar o catálogo: {catalogo.error.message}</p>}
-      {!ambienteId && catalogo.data && <p>Escolha um ambiente para ver os horários livres e ocupados.</p>}
+      {!ambienteId && catalogo.data && !painel && <p>Escolha um ambiente para ver os horários livres e ocupados.</p>}
+      {!ambienteId && config && painel && (
+        <PainelOcupacao ambientes={ambientes} config={config} semana={semana} agora={agora} hrefAmbiente={hrefAmbiente} />
+      )}
       {ambienteId && ocupacao.isPending && <output className="block">Carregando ocupação…</output>}
       {ocupacao.isError && <p role="alert">Não foi possível carregar a ocupação: {ocupacao.error.message}</p>}
 
