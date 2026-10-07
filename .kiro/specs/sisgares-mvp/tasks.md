@@ -31,7 +31,7 @@ Regras:
 | M2 — `hierarquia` e `conflitos` verdes | 0:45 | Frente 2 (2.1, 2.3) | `repo.py` e handlers (2.7–2.9) |
 | M3 — stack no ar com stubs (`API_URL`, `TABLE_NAME`) | 0:50 | Frente 1 (1.5) | Variáveis `VITE_*` (1.6); seed (1.7). **Feito**: `API_URL`, `TABLE_NAME` e `VITE_*` no `.env` |
 | M4 — handlers reais prontos | 1:25 | Frente 2 (2.11) | Redeploy (1.8) |
-| M5 — API real no ar | 1:30 | Frente 1 (1.8) | Integração (Fase 4) |
+| M5 — API real no ar | 1:30 | Frente 1 (1.8). **Feito**, com notificações | Integração (Fase 4) |
 
 ### Ordem de corte se o tempo apertar
 
@@ -102,28 +102,30 @@ As regras RN5–RN8 e o cenário de demo nunca entram no corte.
   - [x] Gravação com `attribute_not_exists`: a segunda execução não altera nada (R11.7).
   - [x] `--dry-run` confere sem gravar: 90 itens de catálogo, 9 reservas do cenário + 192 do CSV (189 com ambiente, 12 em local próprio), 815 itens de reserva.
   - [x] Rodar `.venv/bin/python scripts/seed.py` (depois das contas de demo da 1.2) e conferir a contagem de itens por tipo; a segunda execução não grava nada. 907 itens (92 de catálogo/contadores + 815 de reservas: 201 META, 208 PER, 196 OCUP#AMBI, 210 OCUP#RECU); reexecução: 0 gravados.
-- [ ] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
-  - [ ] O redeploy sem mudança no template não cria recursos novos (só atualiza código).
-  - [ ] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
-  - [ ] Primeira escrita (`POST /reservas`) funciona; testar sem o statement inline `kms:GenerateDataKey` e removê-lo se a escrita continuar ok (`design.md` §12.5). _R13.4_
-  - [ ] Log group de cada função recebe as decisões `allow`/`deny` em JSON, sem e-mail. _R9.2_
-  - [ ] A criação gera `EMAIL#…` e, para a SEART, `SNP#…` (stream funcionando).
+- [x] 1.8 Redeploy (`bash scripts/deploy_backend.sh`) com os handlers reais (quando a Frente 2 avisar a **M4**). Ao terminar, avisar as frentes (**M5**). _1.7, M4; R13.1_
+  - [x] O redeploy sem mudança no template não cria recursos novos (só atualiza código). Feito com a 2.10 ainda em stub: um novo redeploy entra quando ela ficar pronta.
+  - [x] ID tokens das contas de demo por `uv run scripts/obter_tokens.py` (login SRP, tokens em `~/.cache/sisgares/tokens.json`).
+  - [x] Com o ID token de uma conta de demo, `GET $API_URL/catalogo` responde 200; sem o header `Authorization` ou com token adulterado (1 caractere trocado na assinatura), 401.
+  - [x] Primeira escrita (`POST /reservas`) funciona; testar sem o statement inline `kms:GenerateDataKey` e removê-lo se a escrita continuar ok (`design.md` §12.5). _R13.4_ Removido: criar e cancelar funcionam só com `kms:Decrypt`.
+  - [x] Log group de cada função recebe as decisões `allow`/`deny` em JSON, sem e-mail. _R9.2_
+  - [x] A criação gera `EMAIL#…` e, para a SEART, `SNP#…` (stream funcionando). Com a 2.10 no ar: criar → 4 e-mails (SMSG, SEART, SELOG, SESOT) + `SNP-2026-00002` da SEART; alterar → e-mails "alterada" com o período antigo e o novo, mesmo número SNP; cancelar → e-mails "cancelada" e SNP `cancelado`.
+  - [x] Fumaça da API com as 3 contas: validar (RN1, RN2, RN3, RN5, RN6, RN8), criar (201), repetir (409), minhas reservas, detalhe e painel mascarados para o atendente, alterar (versão 2), cancelar (libera o horário), 403 para ações alheias e 404 genérico.
 
 ## Frente 2 — Backend
 
 Domínio em Python puro, sem boto3, com `agora` injetado (R12.2). Enquanto o hook da 0.4 roda o
 pytest a cada gravação, cada função nasce com o seu teste.
 
-- [ ] 2.1 `dominio/hierarquia.py`: `ancestrais`, `descendentes`, `raiz`, `afetados`. _R3.2_
-- [ ] 2.2 `dominio/regras.py`: `validar_basico(reserva, catalogo, config, agora, periodos_alterados)` → `list[Erro]` (RN1, RN2, RN3, RN4, RN9, quantidade só para limitados, itens inativos); `recursos_oferecidos(ambienteId, catalogo)` (RN9); `status(reserva, agora)` (RN13); `pode_alterar`, `pode_cancelar` (RN12). Comparações de horário no fuso `America/Fortaleza`. _R2, R5_
-- [ ] 2.3 `dominio/conflitos.py`: `conflitos_ambiente(periodos, ocupacoes, margem, ignorar_id)` e `excesso_recurso(periodos, recurso, ocupacoes, qtd, ignorar_id)`, com mensagem e sugestão ("livre a partir de HH:MM"). Com a 2.1 verde, commit e aviso à Frente 1 (**M2**). _R3, R4_
-- [ ] 2.4 `dominio/notificacao.py`: `setores_envolvidos`, `diff_reservas`, `montar_email` (HTML escapado, "ALTERADO:" + `<del>`/`<ins>`), `precisa_snp`. _R6_
-- [ ] 2.5 `tests/`: um teste nomeado por exemplo da seção 6 do caso, de RN1 a RN13 (inclusive RN9 "kit da Sala 1 não aparece na Sala 2", RN10 copa/TI e RN11 com/sem código), mais o diff e o caso "MODIFY sem diferença". `pytest -q` verde. _R12_
-- [ ] 2.6 `comum/auth.py`: `Usuario.from_claims` (parse de `"[a b]"`), `autorizar`, `mascarar_para`, log de decisão sem e-mail. `tests/test_auth.py`. _R1, R8.3, R9_
-- [ ] 2.7 `comum/repo.py` (`design.md` §3): leitura do catálogo; leitura dos locks **antes** das consultas; ocupações em `OCUP#…` com `ConsistentRead=true`; `salvar_reserva` em `TransactWriteItems` com locks e retry único; `cancelar_reserva` (META + `PER#` + Delete dos `OCUP#`); listagens no GSI1 (`SOLI#`, `AGENDA`, `NOTIF`); contadores. _R3.4, R4, R5.3_
-- [ ] 2.8 `comum/http.py` + `handlers/catalogo.py` e `handlers/reservas.py` (Powertools `APIGatewayHttpResolver`, Pydantic com datas convertidas para −03:00 e limites de 5 períodos / 10 recursos, erros 400/409 no formato `RespostaErro` (`{erros: Erro[]}`); 403 e 404 só com `{mensagem}` genérica, sem detalhar a política (R9.3)). _R2–R5, R9.3_
-- [ ] 2.9 `handlers/paineis.py`: ocupação do ambiente (com hierarquia, sem dados da reserva), atendimento (GSI1 `AGENDA` + filtro por setor + `BatchGetItem` + máscara + pedidos SNP), notificações. _R7, R8_
-- [ ] 2.10 `handlers/notificacoes.py`: consumo do stream → `EMAIL#…` e upsert `SNP#…` (`design.md` §6), idempotente por `eventID`, ignorando `MODIFY` sem diferença. _R6_
+- [x] 2.1 `dominio/hierarquia.py`: `ancestrais`, `descendentes`, `raiz`, `afetados`. _R3.2_
+- [x] 2.2 `dominio/regras.py`: `validar_basico(reserva, catalogo, config, agora, periodos_alterados)` → `list[Erro]` (RN1, RN2, RN3, RN4, RN9, quantidade só para limitados, itens inativos); `recursos_oferecidos(ambienteId, catalogo)` (RN9); `status(reserva, agora)` (RN13); `pode_alterar`, `pode_cancelar` (RN12). Comparações de horário no fuso `America/Fortaleza`. _R2, R5_
+- [x] 2.3 `dominio/conflitos.py`: `conflitos_ambiente(periodos, ocupacoes, margem, ignorar_id)` e `excesso_recurso(periodos, recurso, ocupacoes, qtd, ignorar_id)`, com mensagem e sugestão ("livre a partir de HH:MM"). Com a 2.1 verde, commit e aviso à Frente 1 (**M2**). _R3, R4_
+- [x] 2.4 `dominio/notificacao.py`: `setores_envolvidos`, `diff_reservas`, `montar_email` (HTML escapado, "ALTERADO:" + `<del>`/`<ins>`), `precisa_snp`. _R6_
+- [x] 2.5 `tests/`: um teste nomeado por exemplo da seção 6 do caso, de RN1 a RN13 (inclusive RN9 "kit da Sala 1 não aparece na Sala 2", RN10 copa/TI e RN11 com/sem código), mais o diff e o caso "MODIFY sem diferença". `pytest -q` verde. _R12_
+- [x] 2.6 `comum/auth.py`: `Usuario.from_claims` (parse de `"[a b]"`), `autorizar`, `mascarar_para`, log de decisão sem e-mail. `tests/test_auth.py`. _R1, R8.3, R9_
+- [x] 2.7 `comum/repo.py` (`design.md` §3): leitura do catálogo; leitura dos locks **antes** das consultas; ocupações em `OCUP#…` com `ConsistentRead=true`; `salvar_reserva` em `TransactWriteItems` com locks e retry único; `cancelar_reserva` (META + `PER#` + Delete dos `OCUP#`); listagens no GSI1 (`SOLI#`, `AGENDA`, `NOTIF`); contadores. _R3.4, R4, R5.3_
+- [x] 2.8 `comum/http.py` + `handlers/catalogo.py` e `handlers/reservas.py` (Powertools `APIGatewayHttpResolver`, Pydantic com datas convertidas para −03:00 e limites de 5 períodos / 10 recursos, erros 400/409 no formato `RespostaErro` (`{erros: Erro[]}`); 403 e 404 só com `{mensagem}` genérica, sem detalhar a política (R9.3)). _R2–R5, R9.3_
+- [x] 2.9 `handlers/paineis.py`: ocupação do ambiente (com hierarquia, sem dados da reserva), atendimento (GSI1 `AGENDA` + filtro por setor + `BatchGetItem` + máscara + pedidos SNP), notificações. _R7, R8_
+- [x] 2.10 `handlers/notificacoes.py`: consumo do stream → `EMAIL#…` e upsert `SNP#…` (`design.md` §6), idempotente por `eventID`, ignorando `MODIFY` sem diferença. _R6_
 - [ ] 2.11 `pytest -q` verde, commit e aviso à Frente 1 para o redeploy (**M4**).
 
 ## Frente 3 — Frontend

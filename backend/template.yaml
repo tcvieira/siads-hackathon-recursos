@@ -141,11 +141,6 @@ Resources:
             TableName: !Ref Tabela
         - KMSDecryptPolicy:
             KeyId: !Ref Chave
-        # Pendência do design.md §12.5: testar a escrita sem este statement no redeploy (1.8).
-        - Statement:
-            - Effect: Allow
-              Action: kms:GenerateDataKey
-              Resource: !GetAtt Chave.Arn
       Events:
         Validar:
           Type: HttpApi
@@ -196,10 +191,6 @@ Resources:
             TableName: !Ref Tabela
         - KMSDecryptPolicy:
             KeyId: !Ref Chave
-        - Statement:
-            - Effect: Allow
-              Action: kms:GenerateDataKey
-              Resource: !GetAtt Chave.Arn
       Events:
         # A leitura do stream entra na role automaticamente ao declarar este evento.
         Stream:
