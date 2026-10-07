@@ -327,8 +327,8 @@ def pedido(setor="2", situacao="ativo") -> PedidoSnp:
 def test_gravar_notificacoes_idempotente(repo, tabela):
     assert repo.gravar_notificacoes("9001", "evt-1", [email(), email("3")], [pedido()]) is True
     antes = sorted(i["SK"] for i in todos(tabela) if i["PK"] == "RESE#9001")
-    assert antes == ["EMAIL#2026-11-05T10:00:00-03:00#2", "EMAIL#2026-11-05T10:00:00-03:00#3",
-                     "EVT#evt-1", "SNP#2"]
+    assert antes == ["EMAIL#2026-11-05T10:00:00-03:00#2#evt-1",
+                     "EMAIL#2026-11-05T10:00:00-03:00#3#evt-1", "EVT#evt-1", "SNP#2"]
 
     # Mesmo eventID (retentativa do stream), mesmo com conteúdo diferente: nada novo.
     assert repo.gravar_notificacoes("9001", "evt-1", [email("1", ts="2026-11-05T11:00:00-03:00")],

@@ -75,7 +75,8 @@ def itens(tabela, rid="9001", prefixo="") -> list[dict]:
 
 
 def emails(tabela, rid="9001") -> dict[str, dict]:
-    return {i["SK"]: i for i in itens(tabela, rid, "EMAIL#")}
+    """E-mails por `EMAIL#<ts>#<setor>` (sem o sufixo `#<eventID>` da SK)."""
+    return {i["SK"].rsplit("#", 1)[0]: i for i in itens(tabela, rid, "EMAIL#")}
 
 
 def snp(tabela, rid="9001") -> dict[str, dict]:
@@ -101,6 +102,7 @@ def test_insert_com_projetor_gera_emails_e_snp(criada):
     assert gravados[f"EMAIL#{TS}#1"]["para"] == "PRCE-SMSG@mpf.mp.br"
     assert seart["tipo"] == "criada" and seart["assunto"] == "[SISGARES] Reserva 9001 criada"
     assert seart["GSI1PK"] == "NOTIF" and seart["GSI1SK"] == TS and seart["ts"] == TS
+    assert seart["SK"] == f"EMAIL#{TS}#2#e1"
     assert "Reunião &lt;alinhamento&gt;" in seart["html"] and "<alinhamento>" not in seart["html"]
     assert "solicitante@example.com" not in seart["html"]
     pedidos = snp(tabela)

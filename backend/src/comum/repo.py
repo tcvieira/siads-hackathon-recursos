@@ -411,8 +411,12 @@ class Repositorio:
             "ConditionExpression": "attribute_not_exists(PK)",
         }}]
         for e in emails:
+            # O `ts` tem resolução de segundo (como o ApproximateCreationDateTime): sem o eventID,
+            # dois eventos da mesma reserva no mesmo segundo gravariam a mesma SK e o segundo
+            # e-mail apagaria o primeiro.
             ops.append({"Put": {"TableName": nome, "Item": {
-                "PK": pk, "SK": f"EMAIL#{e.ts}#{e.setorId}", "GSI1PK": "NOTIF", "GSI1SK": e.ts,
+                "PK": pk, "SK": f"EMAIL#{e.ts}#{e.setorId}#{event_id}",
+                "GSI1PK": "NOTIF", "GSI1SK": e.ts,
                 **asdict(e)}}})
         for p in pedidos:
             ops.append({"Put": {"TableName": nome,
