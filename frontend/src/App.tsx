@@ -1,42 +1,63 @@
-import { Grade } from './grade/Grade'
-import './App.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { ErroApi } from '@/api/cliente'
+import { useSessao } from '@/auth/contexto'
+import { ProvedorSessao } from '@/auth/sessao'
+import { Toaster } from '@/components/ui/sonner'
+import { configuracaoAusente } from '@/config'
+import { Guarda, Inicio, NaoEncontrada } from '@/layout/Guarda'
+import Layout from '@/layout/Layout'
+import { ConfiguracaoAusente, TelaCarregando, TelaLogin } from '@/layout/TelaAvulsa'
+import Atendimento from '@/paginas/Atendimento'
+import FormularioReserva from '@/paginas/FormularioReserva'
+import Grade from '@/paginas/Grade'
+import MinhasReservas from '@/paginas/MinhasReservas'
+import Notificacoes from '@/paginas/Notificacoes'
 
-/**
- * Casca da aplicação com a estrutura de regiões (landmarks) exigida pela
- * NBR 17225:2025: skip link (5.7.11), um único <header>/<nav>/<main> (5.4),
- * um único <h1> por página (5.3.3) e <main> com foco programável.
- *
- * O roteamento real (react-router) e a autenticação entram nas tarefas 3.2/3.3;
- * por ora o App renderiza diretamente a grade do solicitante (3.6).
- */
-function App() {
-  return (
-    <>
-      <a className="skip-link" href="#conteudo">
-        Pular para o conteúdo principal
-      </a>
+const SOLICITANTE = ['solicitante', 'admin'] as const
+const ATENDENTE = ['atendente', 'admin'] as const
 
-      <header className="cabecalho">
-        <div className="cabecalho__marca">
-          <strong>SISGARES</strong>
-          <span className="cabecalho__sub">Solicitação de Ambientes e Recursos</span>
-        </div>
-        <nav aria-label="Principal">
-          <ul className="menu">
-            <li>
-              <a href="#conteudo" aria-current="page">
-                Grade de horários
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      { index: true, element: <Inicio /> },
+      { path: 'grade', element: <Guarda papeis={SOLICITANTE}><Grade /></Guarda> },
+      { path: 'reservas/nova', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
+      { path: 'reservas/:id/editar', element: <Guarda papeis={SOLICITANTE}><FormularioReserva /></Guarda> },
+      { path: 'minhas-reservas', element: <Guarda papeis={SOLICITANTE}><MinhasReservas /></Guarda> },
+      { path: 'atendimento', element: <Guarda papeis={ATENDENTE}><Atendimento /></Guarda> },
+      { path: 'notificacoes', element: <Guarda papeis={ATENDENTE}><Notificacoes /></Guarda> },
+      { path: '*', element: <NaoEncontrada /> },
+    ],
+  },
+])
 
-      <main id="conteudo" tabIndex={-1}>
-        <Grade />
-      </main>
-    </>
-  )
+const clienteQuery = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // 4xx não melhora tentando de novo.
+      retry: (falhas, erro) => falhas < 2 && !(erro instanceof ErroApi && erro.status >= 400 && erro.status < 500),
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+function Portao() {
+  const { carregando, usuario } = useSessao()
+  if (carregando) return <TelaCarregando />
+  if (!usuario) return <TelaLogin />
+  return <RouterProvider router={router} />
 }
 
-export default App
+export default function App() {
+  if (configuracaoAusente.length) return <ConfiguracaoAusente nomes={configuracaoAusente} />
+  return (
+    <QueryClientProvider client={clienteQuery}>
+      <ProvedorSessao>
+        <Portao />
+      </ProvedorSessao>
+      <Toaster theme="light" position="top-right" />
+    </QueryClientProvider>
+  )
+}

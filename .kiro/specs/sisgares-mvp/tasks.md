@@ -133,21 +133,21 @@ pytest a cada gravação, cada função nasce com o seu teste.
 Critério de pronto de **cada tela** (3.4–3.8): `npm run build` e `npm run lint` verdes, navegação
 completa só com teclado, axe sem violações A/AA e reflow em 320px (steering de acessibilidade).
 
-- [ ] 3.1 Setup sobre o esqueleto existente (0:10–0:25). _R10_
-  - [ ] Remover o conteúdo de exemplo do Vite (`App.css`, `assets/`, hero).
-  - [ ] Fixar as versões do `package.json` nas do `package-lock.json` (sem `^`/`~`) e criar `frontend/.npmrc` com `save-exact=true`.
-  - [ ] Tailwind + shadcn/ui (button, input, label, select, combobox, checkbox, radio-group, dialog, alert-dialog, card, badge, toast), react-router, @tanstack/react-query, react-oidc-context, react-hook-form + zod, lucide-react, date-fns + date-fns-tz; em dev, `@axe-core/react` e MSW.
-  - [ ] Plugin `jsx-a11y` no `frontend/.oxlintrc.json`; `lang="pt-BR"` no `index.html`; tokens de cor com contraste conferido.
-  - [ ] `envDir: '..'` no `vite.config.ts` (lê o `.env` da raiz, `design.md` §7).
-  - [ ] Copiar `docs/requisitos/Imagens/icones-*` para `frontend/public/icones/`.
-- [ ] 3.2 Mocks de API com MSW a partir de `api/tipos.ts` e das rotas do `design.md` §4, incluindo respostas 409 de RN5/RN6/RN8 no formato `RespostaErro`, para desenvolver as telas sem backend. Ligados por `VITE_USE_MOCKS=1`.
-- [ ] 3.3 Auth: `react-oidc-context` com PKCE, `api/cliente.ts` com o ID token, guarda de rota por grupo, layout (skip link, header/nav/main, título + foco no `<h1>` por rota), menu por papel (R1.4), logout. Até a **M1**, usar um usuário simulado nos mocks. _R1_
-- [ ] 3.4 `/reservas/nova` e `/reservas/:id/editar`: formulário completo (`design.md` §7), recursos filtrados pelo ambiente (RN9), validação ao vivo em `aria-live` e resumo de erros com `role="alert"`. _R2, R3.3, R3.6, R4.3_
-- [ ] 3.5 `/minhas-reservas` com status em texto + badge, Editar e Cancelar (AlertDialog). _R5_
-- [ ] 3.6 `/grade`: tabela semântica de 30 min com estados em texto + ícone e botões "Reservar às HH:MM de dd/mm", que abrem o formulário preenchido; lista diária abaixo de 640px. _R7_
-- [ ] 3.7 `/atendimento`: cards por data (hoje + 7 dias, com navegação), `<h2>` por dia, lista semântica. _R8_
-- [ ] 3.8 `/notificacoes`: caixa de saída estruturada (sem renderizar o HTML do e-mail) + pedidos SNP. _R6.4_
-- [ ] 3.9 Depois da **M5**: `VITE_USE_MOCKS=0`, login real e as telas contra a API real.
+- [x] 3.1 Setup sobre o esqueleto existente (0:10–0:25). _R10_
+  - [x] Remover o conteúdo de exemplo do Vite (`App.css`, `assets/`, hero).
+  - [x] Fixar as versões do `package.json` nas do `package-lock.json` (sem `^`/`~`) e criar `frontend/.npmrc` com `save-exact=true`.
+  - [x] Tailwind + shadcn/ui (button, input, label, select, combobox, checkbox, radio-group, dialog, alert-dialog, card, badge, toast), react-router, @tanstack/react-query, react-oidc-context, react-hook-form + zod, lucide-react, date-fns + date-fns-tz; em dev, `@axe-core/react` e MSW.
+  - [x] Plugin `jsx-a11y` no `frontend/.oxlintrc.json`; `lang="pt-BR"` no `index.html`; tokens de cor com contraste conferido.
+  - [x] `envDir: '..'` no `vite.config.ts` (lê o `.env` da raiz, `design.md` §7).
+  - [x] Copiar `docs/requisitos/Imagens/icones-*` para `frontend/public/icones/`.
+- [x] 3.2 Mocks de API com MSW a partir de `api/tipos.ts` e das rotas do `design.md` §4, incluindo respostas 409 de RN5/RN6/RN8 no formato `RespostaErro`, para desenvolver as telas sem backend. Ligados por `VITE_USE_MOCKS=1`.
+- [x] 3.3 Auth: `react-oidc-context` com PKCE, `api/cliente.ts` com o ID token, guarda de rota por grupo, layout (skip link, header/nav/main, título + foco no `<h1>` por rota), menu por papel (R1.4), logout. Até a **M1**, usar um usuário simulado nos mocks. _R1_
+- [x] 3.4 `/reservas/nova` e `/reservas/:id/editar`: formulário completo (`design.md` §7), recursos filtrados pelo ambiente (RN9), validação ao vivo em `aria-live` e resumo de erros com `role="alert"`. _R2, R3.3, R3.6, R4.3_
+- [x] 3.5 `/minhas-reservas` com status em texto + badge, Editar e Cancelar (AlertDialog). _R5_
+- [x] 3.6 `/grade`: tabela semântica de 30 min com estados em texto + ícone e botões "Reservar às HH:MM de dd/mm", que abrem o formulário preenchido; lista diária abaixo de 640px. _R7_
+- [x] 3.7 `/atendimento`: cards por data (hoje + 7 dias, com navegação), `<h2>` por dia, lista semântica. _R8_
+- [x] 3.8 `/notificacoes`: caixa de saída estruturada (sem renderizar o HTML do e-mail) + pedidos SNP. _R6.4_
+- [x] 3.9 Depois da **M5**: `VITE_USE_MOCKS=0`, login real e as telas contra a API real.
 
 ---
 
