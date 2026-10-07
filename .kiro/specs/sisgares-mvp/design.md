@@ -207,7 +207,7 @@ cenário do seed (R11.6).
 
 1. Solicitante: na grade do Auditório (Completo), semana de `D1`, mostra "Ocupado" 09:00–11:00 e "Margem de tolerância" até 11:30. Aciona "Reservar às 09:00" em `D2` → formulário preenchido → adiciona água e café e 1 projetor portátil → salva.
 2. Nova reserva no Auditório (Completo) em `D1` 11:20–12:00 → aviso ao vivo da RN5 ("livre a partir de 11:30"). Troca para `D1` 15:00–17:00 → bloqueio da RN6 (Parte A ocupada 14:00–16:00).
-3. Nova reserva na Sala de Reuniões – 9º andar em `D1` 15:00–17:00 com 1 projetor portátil → bloqueio da RN8 (os 2 disponíveis já estão reservados).
+3. Nova reserva na Sala Videoconferências/Audiências – 10º andar em `D1` 15:00–17:00 com 1 projetor portátil → bloqueio da RN8 (os 2 disponíveis já estão reservados pela F-RN8). Não usar a Sala do 9º andar, onde está a F-RN8: lá o pedido também cairia na RN5 e a tela mostraria dois erros.
 4. Altera a reserva do passo 1 de 09:00 para 10:00 → tela Notificações (como admin): e-mail "ALTERADO" com o horário antigo e o novo; o pedido SNP da SEART mantém o número.
 5. Atendente (SMSG): cards dos próximos dias, com o e-mail do solicitante mascarado.
 6. Cancela a reserva do passo 1 com confirmação → e-mail de cancelamento e pedido SNP cancelado.
