@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="860" viewBox="0 0 1800 860">
+<defs><marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="1800" height="860" fill="#FFFFFF"/>
+<text x="40" y="46" font-family="'DejaVu Sans', Arial, sans-serif" font-size="28" font-weight="700" fill="#16191F" text-anchor="start">SISGARES — Arquitetura AWS</text>
+<rect x="300" y="80" width="1460" height="750" rx="6" fill="#FFFFFF" stroke="#232F3E" stroke-width="2.5"/>
+<rect x="300" y="80" width="230" height="34" rx="6" fill="#232F3E"/>
+<text x="415" y="103" font-family="'DejaVu Sans', Arial, sans-serif" font-size="16" font-weight="700" fill="#FFFFFF" text-anchor="middle">AWS · us-east-1</text>
+<rect x="30" y="140" width="240" height="110" rx="12" fill="#F4F6F8" stroke="#232F3E" stroke-width="2.5"/>
+<rect x="48" y="170" width="50" height="50" rx="9" fill="#232F3E"/>
+<text x="73" y="202" font-family="'DejaVu Sans', Arial, sans-serif" font-size="21" font-weight="700" fill="#FFFFFF" text-anchor="middle">GH</text>
+<text x="114" y="192" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">GitHub</text>
+<text x="114" y="216" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">código-fonte</text>
+<rect x="30" y="340" width="240" height="110" rx="12" fill="#F4F6F8" stroke="#232F3E" stroke-width="2.5"/>
+<rect x="48" y="370" width="50" height="50" rx="9" fill="#232F3E"/>
+<text x="73" y="402" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">USR</text>
+<text x="114" y="392" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Usuários</text>
+<text x="114" y="416" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">navegador</text>
+<rect x="360" y="140" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#DD344C" stroke-width="2.5"/>
+<rect x="378" y="170" width="50" height="50" rx="9" fill="#DD344C"/>
+<text x="403" y="202" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">AMP</text>
+<text x="444" y="192" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Amplify</text>
+<text x="444" y="216" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">site (React)</text>
+<rect x="700" y="140" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#DD344C" stroke-width="2.5"/>
+<rect x="718" y="170" width="50" height="50" rx="9" fill="#DD344C"/>
+<text x="743" y="202" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">COG</text>
+<text x="784" y="192" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Cognito</text>
+<text x="784" y="216" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">login e perfis</text>
+<rect x="1060" y="140" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#E7157B" stroke-width="2.5"/>
+<rect x="1078" y="170" width="50" height="50" rx="9" fill="#E7157B"/>
+<text x="1103" y="202" font-family="'DejaVu Sans', Arial, sans-serif" font-size="21" font-weight="700" fill="#FFFFFF" text-anchor="middle">CW</text>
+<text x="1144" y="192" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">CloudWatch</text>
+<text x="1144" y="216" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">logs</text>
+<rect x="1440" y="140" width="280" height="110" rx="12" fill="#FFFFFF" stroke="#DD344C" stroke-width="2.5"/>
+<rect x="1458" y="170" width="50" height="50" rx="9" fill="#DD344C"/>
+<text x="1483" y="202" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">KMS</text>
+<text x="1524" y="192" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">KMS</text>
+<text x="1524" y="216" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">chave de criptografia</text>
+<rect x="700" y="390" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#E7157B" stroke-width="2.5"/>
+<rect x="718" y="420" width="50" height="50" rx="9" fill="#E7157B"/>
+<text x="743" y="452" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">API</text>
+<text x="784" y="442" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">API Gateway</text>
+<text x="784" y="466" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">API HTTP + JWT</text>
+<rect x="1060" y="390" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#ED7100" stroke-width="2.5"/>
+<rect x="1078" y="420" width="50" height="50" rx="9" fill="#ED7100"/>
+<text x="1103" y="452" font-family="'DejaVu Sans', Arial, sans-serif" font-size="21" font-weight="700" fill="#FFFFFF" text-anchor="middle">λ</text>
+<text x="1144" y="442" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Lambda</text>
+<text x="1144" y="466" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">regras de negócio</text>
+<rect x="1440" y="390" width="280" height="110" rx="12" fill="#FFFFFF" stroke="#C925D1" stroke-width="2.5"/>
+<rect x="1458" y="420" width="50" height="50" rx="9" fill="#C925D1"/>
+<text x="1483" y="452" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">DDB</text>
+<text x="1524" y="442" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">DynamoDB</text>
+<text x="1524" y="466" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">tabela “sisgares”</text>
+<rect x="360" y="640" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#E7157B" stroke-width="2.5"/>
+<rect x="378" y="670" width="50" height="50" rx="9" fill="#E7157B"/>
+<text x="403" y="702" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">SAM</text>
+<text x="444" y="692" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">SAM</text>
+<text x="444" y="716" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">CloudFormation + S3</text>
+<text x="490" y="780" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14" font-weight="400" fill="#5F6B7A" text-anchor="middle">cria toda a infraestrutura</text>
+<rect x="1060" y="640" width="260" height="110" rx="12" fill="#FFFFFF" stroke="#ED7100" stroke-width="2.5"/>
+<rect x="1078" y="670" width="50" height="50" rx="9" fill="#ED7100"/>
+<text x="1103" y="702" font-family="'DejaVu Sans', Arial, sans-serif" font-size="21" font-weight="700" fill="#FFFFFF" text-anchor="middle">λ</text>
+<text x="1144" y="692" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Lambda</text>
+<text x="1144" y="716" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">Notificações</text>
+<rect x="1440" y="640" width="280" height="110" rx="12" fill="#FFFFFF" stroke="#C925D1" stroke-width="2.5"/>
+<rect x="1458" y="670" width="50" height="50" rx="9" fill="#C925D1"/>
+<text x="1483" y="702" font-family="'DejaVu Sans', Arial, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle">STR</text>
+<text x="1524" y="692" font-family="'DejaVu Sans', Arial, sans-serif" font-size="19" font-weight="700" fill="#16191F" text-anchor="start">Streams</text>
+<text x="1524" y="716" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="400" fill="#5F6B7A" text-anchor="start">eventos das reservas</text>
+<path d="M270,195 L360,195" fill="none" stroke="#16191F" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="276" y="166" width="44" height="22" fill="#FFFFFF"/>
+<text x="282" y="182" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#16191F" text-anchor="start">push</text>
+<path d="M270,365 L490,365 L490,250" fill="none" stroke="#0972D3" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="330" y="339" width="116" height="22" fill="#FFFFFF"/>
+<text x="336" y="355" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#0972D3" text-anchor="start">1 abre o site</text>
+<path d="M270,395 L660,395 L660,195 L700,195" fill="none" stroke="#0972D3" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="510" y="404" width="68" height="22" fill="#FFFFFF"/>
+<text x="516" y="420" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#0972D3" text-anchor="start">2 login</text>
+<path d="M270,445 L700,445" fill="none" stroke="#0972D3" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="400" y="454" width="100" height="22" fill="#FFFFFF"/>
+<text x="406" y="470" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#0972D3" text-anchor="start">3 usa a API</text>
+<path d="M830,390 L830,250" fill="none" stroke="#5F6B7A" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#seta)"/>
+<rect x="842" y="309" width="124" height="22" fill="#FFFFFF"/>
+<text x="848" y="325" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#5F6B7A" text-anchor="start">valida o token</text>
+<path d="M960,445 L1060,445" fill="none" stroke="#0972D3" stroke-width="2.5" marker-end="url(#seta)"/>
+<path d="M1320,445 L1440,445" fill="none" stroke="#0972D3" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="1330" y="414" width="92" height="22" fill="#FFFFFF"/>
+<text x="1336" y="430" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#0972D3" text-anchor="start">lê / grava</text>
+<path d="M1190,390 L1190,250" fill="none" stroke="#5F6B7A" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#seta)"/>
+<path d="M1580,250 L1580,390" fill="none" stroke="#5F6B7A" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#seta)"/>
+<rect x="1592" y="309" width="100" height="22" fill="#FFFFFF"/>
+<text x="1598" y="325" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#5F6B7A" text-anchor="start">criptografa</text>
+<path d="M1580,500 L1580,640" fill="none" stroke="#C925D1" stroke-width="2.5" marker-end="url(#seta)"/>
+<path d="M1440,715 L1320,715" fill="none" stroke="#C925D1" stroke-width="2.5" marker-end="url(#seta)"/>
+<path d="M1320,665 L1380,665 L1380,480 L1440,480" fill="none" stroke="#C925D1" stroke-width="2.5" marker-end="url(#seta)"/>
+<rect x="1390" y="564" width="108" height="22" fill="#FFFFFF"/>
+<text x="1396" y="580" font-family="'DejaVu Sans', Arial, sans-serif" font-size="14.5" font-weight="700" fill="#C925D1" text-anchor="start">grava avisos</text>
+</svg>
