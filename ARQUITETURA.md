@@ -60,22 +60,52 @@ O `custom:setorId` **só aparece no ID token**. O access token traz `cognito:gro
 
 Rodar em um único terminal, na ordem, porque cada passo usa as variáveis do anterior. Os valores entre `<>` precisam ser preenchidos.
 
-**0. App no Amplify (só para fixar a URL do frontend)**
+**0. App no Amplify, conectado ao GitHub**
 
-O Cognito precisa da URL do frontend antes de o frontend existir. Criar o app e o branch `main` no Amplify já fixa a URL `https://main.$APP_ID.amplifyapp.com`, sem precisar de deploy nem de repositório git (o deploy manual usa o mesmo branch).
+O Cognito precisa da URL do frontend antes de o frontend existir. Criar o app e o branch `main` no Amplify já fixa a URL `https://main.$APP_ID.amplifyapp.com`. Conectado ao repositório, cada push na `main` dispara build e deploy.
+
+Pré-requisitos no GitHub:
+
+- Aceitar o convite de colaborador em https://github.com/tcvieira/siads-hackathon-recursos/invitations.
+- O Amplify usa o token só para instalar o **GitHub App "AWS Amplify"** no repositório e não guarda o token. Como o repositório é pessoal do `tcvieira`, provavelmente **só ele** consegue autorizar essa instalação (https://github.com/apps/aws-amplify-us-east-1). Se o comando abaixo falhar com erro de instalação ou permissão, é isso.
+- Token clássico com escopos `repo` e `admin:repo_hook`.
+
+O token é lido sem eco e apagado em seguida. **Nunca** colar o token em chat, arquivo ou `.env` versionado.
 
 ```bash
 export AWS_REGION=us-east-1                 # região do hackathon
-APP_ID=$(aws amplify create-app --name sisgares --query app.appId --output text)
-aws amplify create-branch --app-id "$APP_ID" --branch-name main
+REPO=https://github.com/tcvieira/siads-hackathon-recursos
+read -s -p "GitHub token: " GH_TOKEN; echo
+
+APP_ID=$(aws amplify create-app --name sisgares --platform WEB \
+  --repository "$REPO" --access-token "$GH_TOKEN" \
+  --query app.appId --output text)
+unset GH_TOKEN
+aws amplify create-branch --app-id "$APP_ID" --branch-name main --enable-auto-build
 echo "APP_ID=$APP_ID"                       # formato d1a2b3c4d5e6f7
 ```
 
-Se o app já existir, pegue o ID em vez de criar outro:
+O build segue o `amplify.yml` na raiz do repositório (comandos de build e pasta de saída do frontend), que precisa ser criado junto com o frontend.
+
+**Estado atual:** o app já existe, com o ID `d3vro5b84ccm5j`, conectado ao GitHub e com o branch `main` em auto-build. A URL do frontend é `https://main.d3vro5b84ccm5j.amplifyapp.com/`. Não rode o bloco acima de novo. Para recuperar o ID:
+
+```bash
+APP_ID=$(aws amplify list-apps \
+  --query "apps[?name=='sisgares' && repository!=null].appId" --output text)
+```
+
+Se já existir um app `sisgares` **sem repositório** (deploy manual), tente conectá-lo antes de recriar:
 
 ```bash
 APP_ID=$(aws amplify list-apps --query "apps[?name=='sisgares'].appId" --output text)
+read -s -p "GitHub token: " GH_TOKEN; echo
+aws amplify update-app --app-id "$APP_ID" --repository "$REPO" --access-token "$GH_TOKEN"
+unset GH_TOKEN
 ```
+
+Se o `update-app` recusar, apague o app (`aws amplify delete-app --app-id "$APP_ID"`) e rode o bloco de criação acima. Isso **muda o `APP_ID`** e, com ele, a URL do frontend. Se o User Pool client já existir, atualize as callback URLs (passo 4).
+
+Plano B, sem GitHub: manter o app sem repositório e publicar por deploy manual (zip do build com `aws amplify create-deployment` + `start-deployment`).
 
 **1. Variáveis**
 
@@ -84,7 +114,7 @@ NOME=sisgares
 DOMINIO='sisgares-<sufixo-unico>'            # prefixo do domínio de login, único na região
 SENHA='<Senha-Demo-123!>'                   # 8+ caracteres, com maiúscula, minúscula, número e símbolo
 SETOR_ID=1                                  # ENVO_ID do setor do atendente (dados-envolvido.csv)
-CALLBACKS="http://localhost:4200/ https://main.$APP_ID.amplifyapp.com/"
+CALLBACKS="http://localhost:5173/ https://main.$APP_ID.amplifyapp.com/"
 ```
 
 As URLs de callback precisam bater **exatamente** (inclusive a barra final) com o `redirect_uri` usado pelo frontend. Só `localhost` pode usar `http`.
@@ -191,7 +221,7 @@ aws cognito-idp admin-list-groups-for-user --user-pool-id "$POOL" \
 Para testar o login no navegador, abra a URL abaixo, entre com uma conta de demo e confira se o Cognito redireciona para o callback com `?code=...`:
 
 ```bash
-echo "https://$DOMINIO.auth.$AWS_REGION.amazoncognito.com/login?client_id=$CLIENT_ID&response_type=code&scope=openid+email+profile&redirect_uri=http://localhost:4200/"
+echo "https://$DOMINIO.auth.$AWS_REGION.amazoncognito.com/login?client_id=$CLIENT_ID&response_type=code&scope=openid+email+profile&redirect_uri=http://localhost:5173/"
 ```
 
 **8. Valores para o resto da aplicação**
