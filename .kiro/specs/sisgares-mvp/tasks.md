@@ -8,8 +8,8 @@ da C.6 vira uma lista simples sem filtros. As regras RN5–RN8 nunca entram no c
 
 ## Fase 0 — Base (0:00–0:15)
 
-- [ ] 0.1 Criar a estrutura de pastas do `design.md` §2 (`backend/`, `frontend/`, `scripts/`) e o `.gitignore` (node_modules, .aws-sam, dist, .venv). _R11_
-- [ ] 0.2 `scripts/cognito.sh`: passos 0–7 do `ARQUITETURA.md`, idempotente (reaproveita app/pool existentes), callbacks `http://localhost:5173/` e `https://main.$APP_ID.amplifyapp.com/`. Grava os IDs no `.env`. Rodar. _R1_
+- [ ] 0.1 Criar `backend/` conforme `design.md` §2 e acrescentar `.aws-sam/` ao `.gitignore`. O `frontend/` (esqueleto React + Vite), o `amplify.yml` e o `scripts/` já existem: não recriar. _R11_
+- [ ] 0.2 `scripts/cognito.sh`: passos 1–7 do `ARQUITETURA.md` (o passo 0 já foi feito: app Amplify `d3vro5b84ccm5j` conectado ao GitHub), idempotente (reaproveita o pool existente), callbacks `http://localhost:5173/` e `https://main.$APP_ID.amplifyapp.com/`. Grava os IDs no `.env`. Rodar. _R1_
 - [ ] 0.3 Congelar os contratos: `backend/src/dominio/modelos.py` (dataclasses/Pydantic) e `frontend/src/api/tipos.ts` com o mesmo shape (`design.md` §4). _R2_
 
 ## Trilha A — Domínio + testes (0:15–1:05)
@@ -31,7 +31,7 @@ da C.6 vira uma lista simples sem filtros. As regras RN5–RN8 nunca entram no c
 
 ## Trilha C — Frontend (0:15–1:20)
 
-- [ ] C.1 Vite + React + TS + Tailwind + shadcn/ui (button, input, label, select, combobox, checkbox, radio-group, dialog, alert-dialog, card, badge, toast), jsx-a11y, `lang="pt-BR"`, tokens de cor com contraste conferido. _R10_
+- [ ] C.1 Sobre o esqueleto existente em `frontend/`: remover o conteúdo de exemplo do Vite (`App.css`, `assets/`, hero), fixar as versões do `package.json` nas do `package-lock.json` (sem `^`/`~`) e criar `frontend/.npmrc` com `save-exact=true`; instalar Tailwind + shadcn/ui (button, input, label, select, combobox, checkbox, radio-group, dialog, alert-dialog, card, badge, toast) já com versões exatas; habilitar o plugin `jsx-a11y` no `frontend/.oxlintrc.json`; `lang="pt-BR"` no `index.html`; tokens de cor com contraste conferido. `npm run build` e `npm run lint` verdes. _R10_
 - [ ] C.2 Auth: `react-oidc-context` com PKCE, `api/cliente.ts` com o ID token, guarda de rota por grupo, layout (skip link, header/nav/main, título + foco por rota), logout. _R1_
 - [ ] C.3 `/reservas/nova` e `/editar`: formulário completo (`design.md` §7), validação ao vivo em `aria-live` e resumo de erros com `role="alert"`. _R2, R3.3, R3.6, R4.3_
 - [ ] C.4 `/grade`: tabela semântica de 30 min com estados em texto + ícone e botões "Reservar às HH:MM de dd/mm", que abrem o formulário pré-preenchido; lista diária abaixo de 640px. _R7_
@@ -48,7 +48,7 @@ da C.6 vira uma lista simples sem filtros. As regras RN5–RN8 nunca entram no c
 ## Fase 3 — Integração e deploy (1:20–1:40)
 
 - [ ] 3.1 Frontend apontando para a API real. Fluxo de ponta a ponta com as 3 contas.
-- [ ] 3.2 `scripts/deploy-frontend.sh`: `npm run build`, zip do `dist/`, `amplify create-deployment` + upload + `start-deployment`. Conferir o login pela URL do Amplify.
+- [ ] 3.2 Deploy do frontend por push na `main` (auto-build do Amplify via `amplify.yml`). Antes, cadastrar as variáveis `VITE_*` no app Amplify (`aws amplify update-branch --environment-variables` ou console), porque o build roda no Amplify e não lê o `.env` local. Acompanhar o job, rodar `scripts/smoke_amplify.py` e conferir o login em `https://main.d3vro5b84ccm5j.amplifyapp.com/`.
 - [ ] 3.3 Executar o roteiro da demo (`design.md` §11) e corrigir os bloqueios.
 - [ ] 3.4 Kiro hook: `PostFileSave` em `backend/src/dominio/**` → `pytest -q` (conta no critério "uso de hooks").
 

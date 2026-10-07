@@ -46,8 +46,18 @@ frontend/                       # Vite + React + TS + Tailwind + shadcn/ui
 scripts/
   cognito.sh                    # passos do ARQUITETURA.md, com callback 5173
   seed.py                       # CSV -> DynamoDB (R11)
-  deploy-frontend.sh            # build + amplify create-deployment + upload zip
+  smoke_amplify.py              # já existe: conferência do deploy no Amplify
+amplify.yml                     # já existe: build de frontend/ -> frontend/dist
 ```
+
+O frontend já tem um esqueleto (React 19, Vite 8, TypeScript 6, oxlint). O deploy é **por push
+na `main`**: o app Amplify `d3vro5b84ccm5j` está conectado ao GitHub com auto-build e segue o
+`amplify.yml`. Não há script de deploy manual (o plano B do `ARQUITETURA.md` só vale se a
+conexão com o GitHub falhar).
+
+**Versões fixas:** todas as dependências (npm e pip) usam versão exata, sem `^` ou `~`.
+O `package.json` do esqueleto veio com `^`/`~` e deve ser fixado nas versões do
+`package-lock.json` (e `npm config set save-exact true` em `frontend/.npmrc`).
 
 Todas as Lambdas usam `CodeUri: backend/src`, cada uma com o seu `Handler` e a sua role.
 
@@ -120,7 +130,7 @@ Códigos de erro do domínio: `PERIODO_INVALIDO`, `CAMPO_OBRIGATORIO`, `FORA_FAI
 
 ## 7. Frontend
 
-Bibliotecas: react-router, @tanstack/react-query, react-oidc-context (oidc-client-ts), react-hook-form + zod, shadcn/ui (Radix), lucide-react, date-fns + date-fns-tz. Em dev: eslint-plugin-jsx-a11y e @axe-core/react.
+Bibliotecas: react-router, @tanstack/react-query, react-oidc-context (oidc-client-ts), react-hook-form + zod, shadcn/ui (Radix), lucide-react, date-fns + date-fns-tz. Em dev: **oxlint** (já configurado em `frontend/.oxlintrc.json`) com o plugin `jsx-a11y` habilitado, e @axe-core/react.
 
 | Rota | Papel | Conteúdo |
 |---|---|---|
@@ -145,7 +155,7 @@ Config via `VITE_COGNITO_AUTHORITY`, `VITE_COGNITO_CLIENT_ID`, `VITE_COGNITO_DOM
 ## 9. Testes
 
 - `backend/tests` com pytest, só sobre o domínio e o `auth` (sem AWS). Cada exemplo da seção 6 do caso vira um caso nomeado (`test_rn5_margem_1120_bloqueado`, `test_rn5_margem_1130_aceito`, `test_rn6_pai_filho`, `test_rn7_segundo_salvamento`, `test_rn8_projetor_2_bloqueado_1_aceito` etc.). A RN7 é testada no domínio, revalidando contra o estado atualizado; o lock transacional é verificado na demo.
-- Frontend: `npm run build` + lint jsx-a11y. Checklist manual de teclado e axe nas 5 telas.
+- Frontend: `npm run build` + `npm run lint` (oxlint com `jsx-a11y`). Checklist manual de teclado e axe nas 5 telas.
 
 ## 10. Decisões e premissas
 
