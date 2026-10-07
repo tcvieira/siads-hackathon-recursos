@@ -75,12 +75,12 @@ export function useNotificacoes(de?: string, ate?: string) {
 
 /**
  * POST /reservas/validar — dry-run (R2–R4). `id` informa a reserva em alteração
- * (o mock a ignora nos conflitos; a API real recebe `?id=`).
+ * (o mock e a API recebem `?reservaId=`).
  */
 export function useValidarReserva() {
   return useMutation({
     mutationFn: ({ entrada, id }: { entrada: ReservaEntrada; id?: string }) =>
-      requisitar<ResultadoValidacao>(`/reservas/validar${id ? `?id=${encodeURIComponent(id)}` : ''}`, {
+      requisitar<ResultadoValidacao>(`/reservas/validar${id ? `?reservaId=${encodeURIComponent(id)}` : ''}`, {
         method: 'POST',
         ...json(entrada),
       }),

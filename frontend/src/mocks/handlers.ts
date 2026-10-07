@@ -108,7 +108,7 @@ export const handlers = [
     const u = exigir(request, 'solicitante', 'admin')
     if (u instanceof Response) return u
     const entrada = (await request.json()) as ReservaEntrada
-    const id = new URL(request.url).searchParams.get('id')
+    const id = new URL(request.url).searchParams.get('reservaId')
     const antiga = id ? reservas.get(id) : undefined
     const { basicos, conflitos } = validar(entrada, antiga)
     const lista = [...basicos, ...conflitos]
